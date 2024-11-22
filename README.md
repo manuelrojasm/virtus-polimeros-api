@@ -1,68 +1,116 @@
-# CodeIgniter 4 Application Starter
+---
+  ## 🌱 **PLATAFORMA WEB PARA LA CAPACITACIÓN Y CONCIENTIZACIÓN EN LA CONTAMINACIÓN POR POLÍMEROS Y EL USO DE BIOPOLÍMERO** 🌳
 
-## What is CodeIgniter?
+  Este proyecto propone el desarrollo de una plataforma web diseñada para educar y concientizar a la comunidad sobre el impacto ambiental de los polímeros sintéticos y los beneficios del uso de biopolímeros. 
+  La plataforma tiene como objetivo proporcionar herramientas informativas y prácticas que promuevan el reciclaje, la correcta gestión de residuos y la transición hacia alternativas más sostenibles. 
+  Además, busca sensibilizar a los usuarios sobre la importancia de adoptar hábitos responsables para mitigar la contaminación y proteger el planeta.
+  
+ #### 🌿 Con esta iniciativa, se espera no solo generar conocimiento, sino también fomentar la acción colectiva hacia un futuro más sostenible, promoviendo el uso de biopolímeros y prácticas amigables con el medio ambiente. 🍃
+---
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+# **Proyecto CodeIgniter 4 con MySQL**
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+Este proyecto es una API desarrollada en **CodeIgniter 4** con **MySQL** como base de datos. Está diseñado para proporcionar una estructura limpia y modular para construir aplicaciones web y APIs de forma rápida y eficiente.
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+## **Requisitos del Proyecto**
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+Para poder ejecutar este proyecto en tu entorno local, asegúrate de tener las siguientes herramientas instaladas:
 
-## Installation & updates
+- **PHP** (v7.4 o superior)
+- **Composer** (para gestionar dependencias)
+- **MySQL** (o MariaDB)
+- **Servidor web** (Apache o Nginx)
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+---
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## **Configuración del Proyecto**
 
-## Setup
+### **1. Clonar el Repositorio**
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+Primero, clona el repositorio en tu máquina local:
 
-## Important Change with index.php
+```bash
+git clone https://github.com/manuelrojasm/virtus-polimeros-api.git
+cd virtus-polimeros-api
+```
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+### **2. Instalar Dependencias**
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+Instala las dependencias del proyecto usando **Composer**:
 
-**Please** read the user guide for a better explanation of how CI4 works!
+```bash
+composer install
+```
 
-## Repository Management
+### **3. Configurar la Base de Datos**
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+Configura la conexión a la base de datos en el archivo `.env`. Renómbralo desde `.env.example` a `.env`:
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+```bash
+cp .env.example .env
+```
 
-## Server Requirements
+Edita las siguientes líneas en el archivo `.env` para conectar la base de datos:
 
-PHP version 7.4 or higher is required, with the following extensions installed:
+```env
+database.default.hostname = localhost
+database.default.database = nombre_de_tu_base_de_datos
+database.default.username = tu_usuario
+database.default.password = tu_contraseña
+database.default.DBDriver = MySQLi
+```
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+### **4. Ejecutar las Migraciones (si las tienes)**
 
-> [!WARNING]
-> The end of life date for PHP 7.4 was November 28, 2022.
-> The end of life date for PHP 8.0 was November 26, 2023.
-> If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> The end of life date for PHP 8.1 will be November 25, 2024.
+Si tienes migraciones de base de datos, ejecuta el siguiente comando para que se creen las tablas en tu base de datos:
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+```bash
+php spark migrate
+```
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+---
+
+## **Ejecutar el Proyecto**
+
+### **5. Servidor Local de Desarrollo**
+
+Puedes usar el servidor de desarrollo de PHP para ejecutar la aplicación localmente:
+
+```bash
+php spark serve
+```
+
+El servidor se iniciará en [http://localhost:8080](http://localhost:8080).
+
+### **6. Acceder a la API**
+
+Asegúrate de que el servidor esté en ejecución y prueba algunos de los endpoints de la API utilizando **Postman** o **cURL**.
+
+Ejemplo para obtener todos los usuarios:
+
+```bash
+curl http://localhost:8080/api/users
+```
+
+## **Despliegue**
+
+Para desplegar el proyecto en un servidor de producción, asegúrate de:
+
+1. Configurar correctamente las variables de entorno en el archivo `.env`.
+2. Configurar un servidor web (Apache o Nginx) para apuntar al directorio `public`.
+3. Asegurarte de que las migraciones de base de datos estén ejecutadas en el servidor de producción.
+
+---
+
+## 📄 **Licencia**
+Este proyecto es realziado para ETITC - Escuela Tecnológica Instituto Técnico Central todos los derechos son reservados.
+
+---
+
+## ✨ **Autores**
+- **Manuel Alberto Rojas Martinez** - Investigador y Desarrollador- [GitHub](https://github.com/manuelrojasm)  
+- **Jaime Alberto Paez** Docente y Investigador Supervisor
+
+---
+
+Si necesita ayuda con algún apartado más detallado o adaptarlo aún más, ¡dímelo! 😊 manuelrojasm13@gmail.com
