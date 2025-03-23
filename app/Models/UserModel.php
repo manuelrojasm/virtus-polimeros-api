@@ -20,6 +20,8 @@ class UserModel extends Model
         'Contraseña',
         'Certificado',
         'FechaCreacion',
+        'TipoDoc',
+        'Documento',
         'Estado'
     ];
 

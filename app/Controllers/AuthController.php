@@ -24,45 +24,49 @@ class AuthController extends ResourceController
         
         // Validar que todos los campos requeridos estén presentes
         if (!isset($json->Correo) || empty($json->Correo)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Correo es obligatorio'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo Correo es obligatorio'], 200);
         }
         if (!isset($json->Contraseña) || empty($json->Contraseña)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Contraseña es obligatorio'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo Contraseña es obligatorio'], 200);
         }
         if (!isset($json->idRol) || !in_array($json->idRol, [1, 2])) {
-            return $this->respond(['success' => false, 'message' => 'El campo idRol es obligatorio y debe ser 1 (estudiante) o 2 (admin)'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo idRol es obligatorio y debe ser 1 (estudiante) o 2 (admin)'], 200);
         }
         if (!isset($json->PrimerNombre) || empty($json->PrimerNombre)) {
-            return $this->respond(['success' => false, 'message' => 'El campo PrimerNombre es obligatorio'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo PrimerNombre es obligatorio'], 200);
         }
         if (!isset($json->PrimerApellido) || empty($json->PrimerApellido)) {
-            return $this->respond(['success' => false, 'message' => 'El campo PrimerApellido es obligatorio'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo PrimerApellido es obligatorio'], 200);
         }
         if (!isset($json->Celular) || empty($json->Celular)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Celular es obligatorio'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo Celular es obligatorio'], 200);
         }
         if (!isset($json->Edad) || empty($json->Edad) || !is_numeric($json->Edad)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Edad es obligatorio y debe ser un número'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo Edad es obligatorio y debe ser un número'], 200);
         }
         if (!isset($json->Genero) || empty($json->Genero)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Genero es obligatorio'], 400);
+            return $this->respond(['success' => false, 'message' => 'El campo Genero es obligatorio'], 200);
         }
         
         // Validar que el formato del correo sea correcto
         if (!filter_var($json->Correo, FILTER_VALIDATE_EMAIL)) {
-            return $this->respond(['success' => false, 'message' => 'El formato del Correo es inválido'], 400);
+            return $this->respond(['success' => false, 'message' => 'El formato del Correo es inválido'], 200);
         }
     
         // Validar que la contraseña tenga al menos 6 caracteres
         if (strlen($json->Contraseña) < 6) {
-            return $this->respond(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres'], 400);
+            return $this->respond(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres'], 200);
         }
         
         $userModel = new UserModel();
+
+        // Verificar si el usuario ya existe por correo o documento
+        $existingUser = $userModel->where('Correo', $json->Correo)
+        ->orWhere('Documento', $json->Documento)
+        ->first();
         
-        // Verificar si el usuario ya existe
-        if ($userModel->where('Correo', $json->Correo)->first()) {
-            return $this->respond(['success' => false, 'message' => 'El usuario ya existe'], 409);
+        if ($existingUser) {
+        return $this->respond(['success' => false, 'message' => 'El usuario ya existe'], 200);
         }
         
         // Encriptar contraseña
