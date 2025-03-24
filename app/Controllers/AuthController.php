@@ -12,7 +12,7 @@ class AuthController extends ResourceController
 
     public function __construct()
     {
-        $this->key = "purdy14"; // Cambia esto por una clave segura
+        $this->key = getenv('JWT_SECRET'); 
     }
 
     /**
@@ -96,42 +96,41 @@ class AuthController extends ResourceController
     public function login()
     {
         $json = $this->request->getJSON();
-        $email = $json->email;
-        $password = $json->password;
-
+    
+        // Validar que los campos requeridos estén presentes
+        if (!isset($json->Correo) || empty($json->Correo)) {
+            return $this->respond(['success' => false, 'message' => 'El campo Correo es obligatorio'], 200);
+        }
+        if (!isset($json->Contraseña) || empty($json->Contraseña)) {
+            return $this->respond(['success' => false, 'message' => 'El campo Contraseña es obligatorio'], 200);
+        }
+    
+        // Buscar el usuario por correo
         $userModel = new UserModel();
-        $user = $userModel->where('email', $email)->first();
-
+        $user = $userModel->where('Correo', $json->Correo)->first();
+    
         if (!$user) {
-            return $this->respond(['success' => false, 'message' => 'Usuario no encontrado'], 401);
+            return $this->respond(['success' => false, 'message' => 'Usuario no encontrado'], 200);
         }
-
-        if (!password_verify($password, $user['password'])) {
-            return $this->respond(['success' => false, 'message' => 'Contraseña incorrecta'], 401);
+    
+        // Verificar la contraseña
+        if (!password_verify($json->Contraseña, $user['Contraseña'])) {
+            return $this->respond(['success' => false, 'message' => 'Contraseña incorrecta'], 200);
         }
-
-        // Generar JWT
+    
         $payload = [
+            'id' => $user['idUsuario'],
+            'idRol' => $user['idRol'],
             'iat' => time(),
-            'exp' => time() + (60 * 60), // 1 hora de validez
-            'data' => [
-                'id' => $user['id'],
-                'email' => $user['email'],
-                'role' => $user['role'] // 1 = estudiante, 2 = admin
-            ]
+            'exp' => time() + 3600
         ];
-
+        
         $token = JWT::encode($payload, $this->key, 'HS256');
-
+    
         return $this->respond([
             'success' => true,
             'message' => 'Login exitoso',
-            'user' => [
-                'id' => $user['id'],
-                'email' => $user['email'],
-                'role' => $user['role']
-            ],
             'token' => $token
-        ]);
+        ], 200);
     }
 }
