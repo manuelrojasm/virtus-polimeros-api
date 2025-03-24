@@ -5,6 +5,7 @@ use CodeIgniter\RESTful\ResourceController;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Models\UserModel;
+use CodeIgniter\Email\Email;
 
 class AuthController extends ResourceController
 {
@@ -13,6 +14,7 @@ class AuthController extends ResourceController
     public function __construct()
     {
         $this->key = getenv('JWT_SECRET'); 
+        helper(['email']);
     }
 
     /**
@@ -132,5 +134,61 @@ class AuthController extends ResourceController
             'message' => 'Login exitoso',
             'token' => $token
         ], 200);
+    }
+
+    public function sendLoginReminder()
+    {
+        $json = $this->request->getJSON();
+        
+        if (!isset($json->Correo) || empty($json->Correo)) {
+            return $this->respond(['success' => false, 'message' => 'El campo Correo es obligatorio'], 200);
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->where('Correo', $json->Correo)->first();
+
+        if (!$user) {
+            return $this->respond(['success' => false, 'message' => 'Usuario no encontrado'], 200);
+        }
+
+        $newPassword = $this->generateRandomPassword();
+        
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        
+        $userModel->update($user['idUsuario'], ['Contraseña' => $hashedPassword]);
+
+        $emailSubject = 'Recordatorio de acceso a tu cuenta';
+        $emailBody = "
+            <p>Hola {$user['PrimerNombre']} {$user['PrimerApellido']},</p>
+            <p>Este es un recordatorio de tus datos de acceso:</p>
+            <p><strong>Correo:</strong> {$user['Correo']}</p>
+            <p><strong>Contraseña:</strong> {$newPassword}</p>
+            <p>¡Recuerda que debes mantener tu contraseña segura!</p>
+            <p>Si necesitas cambiar tu contraseña, puedes hacerlo en la página de configuración de tu cuenta.</p>
+            <p>¡Gracias!</p>
+        ";
+
+        $email = \Config\Services::email();
+        $email->setTo($user['Correo']);
+        $email->setSubject($emailSubject);
+        $email->setMessage($emailBody);
+        
+        // Enviar el correo
+        if ($email->send()) {
+            return $this->respond(['success' => true, 'message' => 'Correo enviado con éxito'], 200);
+        } else {
+            return $this->respond(['success' => false, 'message' => 'Error al enviar el correo'], 200);
+        }
+    }
+
+    private function generateRandomPassword($length = 8)
+    {
+        // Generar una contraseña aleatoria con letras y números
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $password = '';
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $password;
     }
 }
