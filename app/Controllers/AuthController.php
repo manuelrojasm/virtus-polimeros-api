@@ -15,6 +15,11 @@ class AuthController extends ResourceController
     {
         $this->key = getenv('JWT_SECRET'); 
         helper(['email']);
+        
+        // Agregar cabeceras CORS para permitir solicitudes desde otros dominios
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
     }
 
     /**
@@ -59,22 +64,32 @@ class AuthController extends ResourceController
         if (strlen($json->Contraseña) < 6) {
             return $this->respond(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres'], 200);
         }
-        
+    
+        // Validar que el campo Documento no esté vacío
+        if (!isset($json->Documento) || empty($json->Documento)) {
+            return $this->respond(['success' => false, 'message' => 'El campo Documento es obligatorio'], 200);
+        }
+    
+        // Validar que el campo tipoDoc no esté vacío
+        if (!isset($json->TipoDoc) || empty($json->TipoDoc)) {
+            return $this->respond(['success' => false, 'message' => 'El campo tipoDoc es obligatorio'], 200);
+        }
+    
         $userModel = new UserModel();
-
+    
         // Verificar si el usuario ya existe por correo o documento
         $existingUser = $userModel->where('Correo', $json->Correo)
         ->orWhere('Documento', $json->Documento)
         ->first();
         
         if ($existingUser) {
-        return $this->respond(['success' => false, 'message' => 'El usuario ya existe'], 200);
+            return $this->respond(['success' => false, 'message' => 'El usuario ya existe'], 200);
         }
         
         // Encriptar contraseña
         $hashedPassword = password_hash($json->Contraseña, PASSWORD_DEFAULT);
         
-        // Guardar usuario en la base de datos
+        // Guardar usuario en la base de datos, incluyendo el Documento y tipoDoc
         $userModel->insert([
             'idRol' => $json->idRol,
             'PrimerNombre' => $json->PrimerNombre,
@@ -84,6 +99,8 @@ class AuthController extends ResourceController
             'Genero' => $json->Genero,
             'Correo' => $json->Correo,
             'Contraseña' => $hashedPassword,
+            'Documento' => $json->Documento,  // Agregar el Documento
+            'TipoDoc' => $json->TipoDoc, // Agregar el tipoDoc
             'Certificado' => $json->Certificado ?? null, // Opcional
             'Estado' => 1, // 1 = activo, 0 = inactivo
             'FechaCreacion' => date('Y-m-d H:i:s')
@@ -91,6 +108,7 @@ class AuthController extends ResourceController
         
         return $this->respond(['success' => true, 'message' => 'Usuario registrado con éxito'], 201);
     }
+    
     
     /**
      * Inicio de sesión con JWT
