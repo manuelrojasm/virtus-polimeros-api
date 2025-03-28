@@ -10,9 +10,26 @@ class ContactoController extends ResourceController
     protected $modelName = 'App\Models\ContactoModel';
     protected $format    = 'json';
 
+    // Manejo de CORS en todas las respuestas
+    private function setCorsHeaders()
+    {
+        $this->response->setHeader('Access-Control-Allow-Origin', '*');
+        $this->response->setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+        $this->response->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
+
+    // Manejo de solicitudes OPTIONS para CORS
+    public function options()
+    {
+        $this->setCorsHeaders();
+        return $this->response->setStatusCode(200);
+    }
+
     // Crear un contacto
     public function create()
     {
+        $this->setCorsHeaders(); // Agregar cabeceras CORS
+
         $validation = \Config\Services::validation();
 
         $validation->setRules([
@@ -40,6 +57,7 @@ class ContactoController extends ResourceController
     // Obtener todos los contactos
     public function index()
     {
+        $this->setCorsHeaders();
         $contactoModel = new ContactoModel();
         $contactos = $contactoModel->findAll();
         
@@ -53,6 +71,7 @@ class ContactoController extends ResourceController
     // Obtener un contacto por ID
     public function show($id = null)
     {
+        $this->setCorsHeaders();
         $contactoModel = new ContactoModel();
         $contacto = $contactoModel->find($id);
         
@@ -66,6 +85,7 @@ class ContactoController extends ResourceController
     // Actualizar un contacto por ID
     public function update($id = null)
     {
+        $this->setCorsHeaders();
         $validation = \Config\Services::validation();
         
         $validation->setRules([
@@ -93,6 +113,7 @@ class ContactoController extends ResourceController
     // Eliminar un contacto por ID
     public function delete($id = null)
     {
+        $this->setCorsHeaders();
         $contactoModel = new ContactoModel();
         $contacto = $contactoModel->find($id);
         
