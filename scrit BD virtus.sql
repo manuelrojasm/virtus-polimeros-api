@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Usuario` (
   `Ubicacion` VARCHAR(45) NULL,
   `Correo` VARCHAR(100) NOT NULL,
   `Contraseña` VARCHAR(250) NOT NULL,
+  `Documento` VARCHAR(250) NOT NULL,
+  `TipoDoc` VARCHAR(250) NOT NULL,
   `Certificado` TINYINT NULL,
   `FechaCreacion` DATETIME NULL,
   `Estado` TINYINT NULL,

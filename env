@@ -144,3 +144,10 @@
 
 CI_ENVIRONMENT = development
 app.baseURL = 'http://localhost/virtus-polimeros-api/public'
+
+
+database.default.hostname = localhost
+database.default.database = mydb
+database.default.username = root
+database.default.password = root
+database.default.DBDriver = MySQLi
