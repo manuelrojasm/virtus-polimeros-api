@@ -141,6 +141,11 @@ class AuthController extends ResourceController
         $payload = [
             'id' => $user['idUsuario'],
             'idRol' => $user['idRol'],
+            'Nombre' => $user['PrimerNombre'],
+            'Apellido' => $user['PrimerApellido'],
+            'Celular' => $user['Celular'],
+            'Correo' => $user['Correo'],
+            'FotoPerfil' => $user['FotoPerfil'],
             'iat' => time(),
             'exp' => time() + 3600
         ];
@@ -209,4 +214,64 @@ class AuthController extends ResourceController
         }
         return $password;
     }
+
+    public function updateProfile($id = null)
+    {
+        $userModel = new UserModel();
+        $data = $this->request->getJSON(true); // true = return as array
+
+        if (!$data) {
+            return $this->fail('Datos inválidos');
+        }
+
+        // Solo actualizamos campos permitidos
+        $fields = [
+            'PrimerNombre',
+            'PrimerApellido',
+            'Correo',
+            'Celular',
+            'FotoPerfil'
+        ];
+
+        $datosActualizados = array_intersect_key($data, array_flip($fields));
+
+        if (!$userModel->update($id, $datosActualizados)) {
+            return $this->fail('No se pudo actualizar el usuario');
+        }
+
+        return $this->respond([
+            'status' => 200,
+            'message' => 'Perfil actualizado correctamente'
+        ]);
+    }
+
+    public function changePassword($id = null)
+    {
+        $userModel = new UserModel();
+        $data = $this->request->getJSON(true);
+    
+        if (!isset($data['clave_actual']) || !isset($data['nueva_clave'])) {
+            return $this->fail('Datos incompletos');
+        }
+    
+        $usuario = $userModel->find($id);
+        if (!$usuario) {
+            return $this->failNotFound('Usuario no encontrado');
+        }
+    
+
+        if (!password_verify($data['clave_actual'], $usuario['Contraseña'])) {
+            return $this->fail('La contraseña actual es incorrecta');
+        }
+    
+        $nuevaClaveHasheada = password_hash($data['nueva_clave'], PASSWORD_DEFAULT);
+    
+        $userModel->update($id, ['Contraseña' => $nuevaClaveHasheada]);
+    
+        return $this->respond([
+            'status' => 200,
+            'message' => 'Contraseña actualizada correctamente'
+        ]);
+    }  
+
 }

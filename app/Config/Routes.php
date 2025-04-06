@@ -12,3 +12,5 @@ $routes->post('contacto', 'ContactoController::create');
 $routes->post('api/register', 'AuthController::register');
 $routes->post('login', 'AuthController::login');
 $routes->post('recoverPassword', 'AuthController::sendLoginReminder');
+$routes->put('usuario/perfil/(:num)', 'AuthController::updateProfile/$1');
+$routes->put('usuario/cambiar-clave/(:num)', 'AuthController::changePassword/$1');
