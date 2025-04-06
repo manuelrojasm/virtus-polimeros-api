@@ -240,7 +240,7 @@ class AuthController extends ResourceController
         }
 
         return $this->respond([
-            'status' => 200,
+            'success' => true,
             'message' => 'Perfil actualizado correctamente'
         ]);
     }
@@ -249,29 +249,38 @@ class AuthController extends ResourceController
     {
         $userModel = new UserModel();
         $data = $this->request->getJSON(true);
-    
+
         if (!isset($data['clave_actual']) || !isset($data['nueva_clave'])) {
-            return $this->fail('Datos incompletos');
+            return $this->respond([
+                'success' => false,
+                'message' => 'Datos incompletos'
+            ], 400);
         }
-    
+
         $usuario = $userModel->find($id);
         if (!$usuario) {
-            return $this->failNotFound('Usuario no encontrado');
+            return $this->respond([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
         }
-    
 
         if (!password_verify($data['clave_actual'], $usuario['Contraseña'])) {
-            return $this->fail('La contraseña actual es incorrecta');
+            return $this->respond([
+                'success' => false,
+                'message' => 'La contraseña actual es incorrecta'
+            ], 400);
         }
-    
+
         $nuevaClaveHasheada = password_hash($data['nueva_clave'], PASSWORD_DEFAULT);
-    
+
         $userModel->update($id, ['Contraseña' => $nuevaClaveHasheada]);
-    
+
         return $this->respond([
-            'status' => 200,
+            'success' => true,
             'message' => 'Contraseña actualizada correctamente'
         ]);
-    }  
+    }
+
 
 }
