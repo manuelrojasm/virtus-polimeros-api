@@ -137,6 +137,14 @@ class AuthController extends ResourceController
         if (!password_verify($json->Contraseña, $user['Contraseña'])) {
             return $this->respond(['success' => false, 'message' => 'Contraseña incorrecta'], 200);
         }
+
+        // Validar que el usuario esté activo
+        if ($user['Estado'] != 1) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Usuario inactivo. Contacta con el administrador.'
+            ], 200);
+        }
     
         $payload = [
             'id' => $user['idUsuario'],
@@ -279,6 +287,39 @@ class AuthController extends ResourceController
         return $this->respond([
             'success' => true,
             'message' => 'Contraseña actualizada correctamente'
+        ]);
+    }
+
+    public function getStudents()
+    {
+        $userModel = new UserModel();
+        $students = $userModel->where('idRol', 1)->findAll();
+
+        return $this->respond([
+            'success' => true,
+            'data' => $students
+        ]);
+    }
+
+    public function toggleUserStatus($id = null)
+    {
+        $userModel = new UserModel();
+        $user = $userModel->find($id);
+
+        if (!$user) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
+
+        $newStatus = $user['Estado'] == 1 ? 0 : 1;
+        $userModel->update($id, ['Estado' => $newStatus]);
+
+        return $this->respond([
+            'success' => true,
+            'message' => 'Estado del usuario actualizado',
+            'nuevo_estado' => $newStatus
         ]);
     }
 
