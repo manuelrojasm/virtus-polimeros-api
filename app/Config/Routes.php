@@ -16,3 +16,7 @@ $routes->put('usuario/perfil/(:num)', 'AuthController::updateProfile/$1');
 $routes->put('usuario/cambiar-clave/(:num)', 'AuthController::changePassword/$1');
 $routes->get('usuario/estudiantes', 'AuthController::getStudents');
 $routes->put('usuario/estado-usuario-estudiante/(:num)', 'AuthController::toggleUserStatus/$1');
+$routes->get('preguntas', 'PreguntaController::index');
+$routes->post('preguntas', 'PreguntaController::create');
+$routes->put('preguntas/update/(:num)', 'PreguntaController::update/$1');
+$routes->delete('preguntas/(:num)', 'PreguntaController::delete/$1');
