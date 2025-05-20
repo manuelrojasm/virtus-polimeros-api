@@ -129,34 +129,33 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`Pregunta` (
   `idPregunta` INT NOT NULL AUTO_INCREMENT,
-  `Pregunta` VARCHAR(45) NULL,
-  `Descripcion` VARCHAR(45) NULL,
-  `T‬ipo` VARCHAR(45) NULL,
-  `FechaCreacion` DATETIME NULL,
-  `FechaActualizacion` DATETIME NULL,
-  `Estado` TINYINT NULL,
-  PRIMARY KEY (`idPregunta`))
-ENGINE = InnoDB;
-
+  `Pregunta` VARCHAR(255) NULL,
+  `Descripcion` TEXT NULL,
+  `Tipo` ENUM('multiple', 'única', 'falso_verdadero', 'autocompletar') NOT NULL,
+  `FechaCreacion` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `FechaActualizacion` DATETIME ON UPDATE CURRENT_TIMESTAMP,
+  `Estado` TINYINT DEFAULT 1,
+  PRIMARY KEY (`idPregunta`)
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `mydb`.`OpcionRespuesta`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`OpcionRespuesta` (
-  `idOpcionRespuesta` INT NOT NULL,
-  `idPregunta` INT NULL,
-  `Respuesta` VARCHAR(45) NULL,
-  `Correcta` VARCHAR(45) NULL,
-  `FechaCreacion` DATETIME NULL,
-  `Estado` TINYINT NULL,
+  `idOpcionRespuesta` INT NOT NULL AUTO_INCREMENT,
+  `idPregunta` INT NOT NULL,
+  `Respuesta` VARCHAR(255) NOT NULL,
+  `Correcta` TINYINT DEFAULT 0,
+  `FechaCreacion` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `Estado` TINYINT DEFAULT 1,
   PRIMARY KEY (`idOpcionRespuesta`),
-  INDEX `idPregunta_idx` (`idPregunta` ASC) VISIBLE,
-  CONSTRAINT `idPregunta`
+  INDEX `idPregunta_idx` (`idPregunta` ASC),
+  CONSTRAINT `fk_pregunta_opcion`
     FOREIGN KEY (`idPregunta`)
-    REFERENCES `mydb`.`Pregunta` (`idPregunta`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    REFERENCES `Pregunta` (`idPregunta`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
