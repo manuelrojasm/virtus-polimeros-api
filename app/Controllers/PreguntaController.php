@@ -14,7 +14,7 @@ class PreguntaController extends ResourceController
         $preguntaModel = new PreguntaModel();
         $opcionModel = new OpcionRespuestaModel();
 
-        $preguntas = $preguntaModel->where('Estado', 1)->findAll();
+        $preguntas = $preguntaModel->findAll();
 
         foreach ($preguntas as &$pregunta) {
             $pregunta['Opciones'] = $opcionModel->where('idPregunta', $pregunta['idPregunta'])->findAll();
@@ -108,11 +108,23 @@ class PreguntaController extends ResourceController
 }
 
 
-    public function delete($id = null)
-    {
-        $preguntaModel = new PreguntaModel();
-        $preguntaModel->update($id, ['Estado' => 0]);
+public function delete($id = null)
+{
+    $preguntaModel = new PreguntaModel();
 
-        return $this->respondDeleted(['idPregunta' => $id]);
+    // Obtener el estado actual
+    $pregunta = $preguntaModel->find($id);
+    if (!$pregunta) {
+        return $this->failNotFound("Pregunta no encontrada");
     }
+
+    $nuevoEstado = $pregunta['Estado'] == 1 ? 0 : 1;
+
+    $preguntaModel->update($id, ['Estado' => $nuevoEstado]);
+
+    return $this->respond([
+        'idPregunta' => $id,
+        'nuevoEstado' => $nuevoEstado
+    ]);
+}
 }
