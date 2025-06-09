@@ -23,44 +23,52 @@ class PreguntaController extends ResourceController
         return $this->respond($preguntas);
     }
 
-    public function create()
-    {
-        $data = $this->request->getJSON(true);
-        print_r($data);
-        // Validación básica
-        if (empty($data['pregunta']) || empty($data['tipo'])) {
-            return $this->failValidationErrors('La pregunta y el tipo son obligatorios.');
-        }
+public function create()
+{
+    $data = $this->request->getJSON(true);
 
-        $preguntaModel = new PreguntaModel();
-        $opcionModel = new OpcionRespuestaModel();
-
-        // Insertar la pregunta
-        $id = $preguntaModel->insert([
-            'Pregunta' => $data['pregunta'],
-            'Descripcion' => $data['descripcion'] ?? '',
-            'Tipo' => $data['tipo'],
-            'FechaCreacion' => date('Y-m-d H:i:s'),
-            'Estado' => $data['estado'] ?? 1
-        ]);
-
-        // Si hay opciones, insertarlas
-        if (isset($data['opciones']) && is_array($data['opciones'])) {
-            foreach ($data['opciones'] as $opcion) {
-                if (!isset($opcion['respuesta'])) continue;
-
-                $opcionModel->insert([
-                    'idPregunta' => $id,
-                    'Respuesta' => $opcion['respuesta'],
-                    'Correcta' => $opcion['correcta'] ? 1 : 0,
-                    'FechaCreacion' => date('Y-m-d H:i:s'),
-                    'Estado' => 1
-                ]);
-            }
-        }
-
-        return $this->respondCreated(['idPregunta' => $id]);
+    // Validación básica
+    if (empty($data['pregunta']) || empty($data['tipo'])) {
+        return $this->failValidationErrors('La pregunta y el tipo son obligatorios.');
     }
+
+    $preguntaModel = new PreguntaModel();
+    $opcionModel = new OpcionRespuestaModel();
+
+    // Preparar datos base de la pregunta
+    $preguntaData = [
+        'Pregunta' => $data['pregunta'],
+        'Descripcion' => $data['descripcion'] ?? '',
+        'Tipo' => $data['tipo'],
+        'FechaCreacion' => date('Y-m-d H:i:s'),
+        'Estado' => $data['estado'] ?? 1,
+    ];
+
+    // Si es de tipo 'rango', agregar los valores mínimo y máximo
+  
+        $preguntaData['RangoMin'] = $data['rango'][0];
+        $preguntaData['RangoMax'] = $data['rango'][1];
+
+    // Insertar la pregunta
+    $id = $preguntaModel->insert($preguntaData);
+
+    // Si hay opciones, insertarlas
+    if (isset($data['opciones']) && is_array($data['opciones'])) {
+        foreach ($data['opciones'] as $opcion) {
+            if (!isset($opcion['respuesta'])) continue;
+
+            $opcionModel->insert([
+                'idPregunta' => $id,
+                'Respuesta' => $opcion['respuesta'],
+                'Correcta' => $opcion['correcta'] ? 1 : 0,
+                'FechaCreacion' => date('Y-m-d H:i:s'),
+                'Estado' => 1
+            ]);
+        }
+    }
+
+    return $this->respondCreated(['idPregunta' => $id]);
+}
 
  public function update($id = null)
 {
@@ -83,7 +91,11 @@ class PreguntaController extends ResourceController
         'Descripcion' => $data['descripcion'] ?? '',
         'Tipo' => $data['tipo'],
         'Estado' => $data['estado'] ?? 1,
+        
     ];
+
+    $datosPregunta['RangoMin'] = $data['rango'][0];
+    $datosPregunta['RangoMax'] = $data['rango'][1];
 
     if (!$preguntaModel->update($id, $datosPregunta)) {
         return $this->fail('Error al actualizar la pregunta');

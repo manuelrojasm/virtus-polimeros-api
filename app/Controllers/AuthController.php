@@ -28,6 +28,7 @@ class AuthController extends ResourceController
     public function register()
     {
         $json = $this->request->getJSON();
+        log_message('info', 'Datos recibidos en registro: ' . json_encode($json));
         
         // Validar que todos los campos requeridos estén presentes
         if (!isset($json->Correo) || empty($json->Correo)) {
@@ -48,8 +49,13 @@ class AuthController extends ResourceController
         if (!isset($json->Celular) || empty($json->Celular)) {
             return $this->respond(['success' => false, 'message' => 'El campo Celular es obligatorio'], 200);
         }
-        if (!isset($json->Edad) || empty($json->Edad) || !is_numeric($json->Edad)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Edad es obligatorio y debe ser un número'], 200);
+        if (!isset($json->FechaNacimiento) || empty($json->FechaNacimiento)) {
+            return $this->respond(['success' => false, 'message' => 'El campo FechaNacimiento es obligatorio'], 200);
+        }
+
+        // Validar formato de fecha
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $json->FechaNacimiento)) {
+            return $this->respond(['success' => false, 'message' => 'El formato de FechaNacimiento es inválido (YYYY-MM-DD)'], 200);
         }
         if (!isset($json->Genero) || empty($json->Genero)) {
             return $this->respond(['success' => false, 'message' => 'El campo Genero es obligatorio'], 200);
@@ -95,7 +101,6 @@ class AuthController extends ResourceController
             'PrimerNombre' => $json->PrimerNombre,
             'PrimerApellido' => $json->PrimerApellido,
             'Celular' => $json->Celular,
-            'Edad' => $json->Edad,
             'Genero' => $json->Genero,
             'Correo' => $json->Correo,
             'Contraseña' => $hashedPassword,
@@ -103,8 +108,25 @@ class AuthController extends ResourceController
             'TipoDoc' => $json->TipoDoc, // Agregar el tipoDoc
             'Certificado' => $json->Certificado ?? null, // Opcional
             'Estado' => 1, // 1 = activo, 0 = inactivo
-            'FechaCreacion' => date('Y-m-d H:i:s')
+            'FechaCreacion' => date('Y-m-d H:i:s'),
+            'FechaNacimiento' => $json->FechaNacimiento,
         ]);
+
+        log_message('info', 'Datos a insertar: ' . json_encode([
+            'idRol' => $json->idRol,
+            'PrimerNombre' => $json->PrimerNombre,
+            'PrimerApellido' => $json->PrimerApellido,
+            'Celular' => $json->Celular,
+            'Genero' => $json->Genero,
+            'Correo' => $json->Correo,
+            'Contraseña' => $hashedPassword,
+            'Documento' => $json->Documento,  // Agregar el Documento
+            'TipoDoc' => $json->TipoDoc, // Agregar el tipoDoc
+            'Certificado' => $json->Certificado ?? null, // Opcional
+            'Estado' => 1, // 1 = activo, 0 = inactivo
+            'FechaCreacion' => date('Y-m-d H:i:s'),
+            'FechaNacimiento' => $json->FechaNacimiento,
+        ]));
         
         return $this->respond(['success' => true, 'message' => 'Usuario registrado con éxito'], 201);
     }

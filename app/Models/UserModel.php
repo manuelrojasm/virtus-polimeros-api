@@ -23,7 +23,8 @@ class UserModel extends Model
         'TipoDoc',
         'Documento',
         'Estado',
-        'FotoPerfil'
+        'FotoPerfil',
+        'FechaNacimiento'
     ];
 
     protected $createdField  = 'FechaCreacion';
