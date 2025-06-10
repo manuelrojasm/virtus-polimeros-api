@@ -4,13 +4,7 @@ namespace App\Controllers;
 
 use App\Models\ContactoModel;
 use CodeIgniter\RESTful\ResourceController;
-
-/**
- * @OA\Tag(
- *     name="Contacto",
- *     description="API para gestión de contactos"
- * )
- */
+use OpenApi\Attributes as OA;
 
 class ContactoController extends ResourceController
 {
@@ -32,41 +26,39 @@ class ContactoController extends ResourceController
         return $this->response->setStatusCode(200);
     }
 
-        /**
-     * @OA\Post(
-     *     path="/contacto",
-     *     tags={"Contacto"},
-     *     summary="Crear un nuevo contacto",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"Nombre", "Correo", "Mensaje"},
-     *             @OA\Property(property="Nombre", type="string", maxLength=100, example="Juan Pérez"),
-     *             @OA\Property(property="Correo", type="string", format="email", example="juan@example.com"),
-     *             @OA\Property(property="Mensaje", type="string", maxLength=250, example="Mensaje de contacto")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Contacto creado correctamente",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="Nombre", type="string"),
-     *             @OA\Property(property="Correo", type="string"),
-     *             @OA\Property(property="Mensaje", type="string"),
-     *             @OA\Property(property="FechaCreación", type="string", format="date-time"),
-     *             @OA\Property(property="Estado", type="integer", example=1)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor"
-     *     )
-     * )
-     */
+        #[OA\Post(
+        path: "/contacto",
+        tags: ["Contacto"],
+        summary: "Crear un nuevo contacto",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["Nombre", "Correo", "Mensaje"],
+                properties: [
+                    new OA\Property(property: "Nombre", type: "string", maxLength: 100, example: "Juan Pérez"),
+                    new OA\Property(property: "Correo", type: "string", format: "email", example: "juan@example.com"),
+                    new OA\Property(property: "Mensaje", type: "string", maxLength: 250, example: "Mensaje de contacto"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: "Contacto creado correctamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "Nombre", type: "string"),
+                        new OA\Property(property: "Correo", type: "string"),
+                        new OA\Property(property: "Mensaje", type: "string"),
+                        new OA\Property(property: "FechaCreación", type: "string", format: "date-time"),
+                        new OA\Property(property: "Estado", type: "integer", example: 1),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: "Errores de validación"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
 
     // Crear un contacto
     public function create()
@@ -97,32 +89,6 @@ class ContactoController extends ResourceController
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/contacto",
-     *     tags={"Contacto"},
-     *     summary="Obtener todos los contactos",
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de contactos",
-     *         @OA\JsonContent(type="array",
-     *             @OA\Items(
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="Nombre", type="string"),
-     *                 @OA\Property(property="Correo", type="string"),
-     *                 @OA\Property(property="Mensaje", type="string"),
-     *                 @OA\Property(property="FechaCreación", type="string", format="date-time"),
-     *                 @OA\Property(property="Estado", type="integer")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="No se encontraron contactos"
-     *     )
-     * )
-     */
-
     // Obtener todos los contactos
     public function index()
     {
@@ -136,37 +102,6 @@ class ContactoController extends ResourceController
             return $this->failNotFound('No se encontraron contactos');
         }
     }
-
-    /**
-     * @OA\Get(
-     *     path="/contacto/{id}",
-     *     tags={"Contacto"},
-     *     summary="Obtener un contacto por ID",
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID del contacto",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Detalle del contacto",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="id", type="integer"),
-     *             @OA\Property(property="Nombre", type="string"),
-     *             @OA\Property(property="Correo", type="string"),
-     *             @OA\Property(property="Mensaje", type="string"),
-     *             @OA\Property(property="FechaCreación", type="string", format="date-time"),
-     *             @OA\Property(property="Estado", type="integer")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Contacto no encontrado"
-     *     )
-     * )
-     */
 
     // Obtener un contacto por ID
     public function show($id = null)
@@ -182,48 +117,6 @@ class ContactoController extends ResourceController
         }
     }
 
-        /**
-     * @OA\Put(
-     *     path="/contacto/{id}",
-     *     tags={"Contacto"},
-     *     summary="Actualizar un contacto por ID",
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID del contacto a actualizar",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"Nombre", "Correo", "Mensaje", "FechaCreación"},
-     *             @OA\Property(property="Nombre", type="string", maxLength=100, example="Juan Pérez"),
-     *             @OA\Property(property="Correo", type="string", format="email", example="juan@example.com"),
-     *             @OA\Property(property="Mensaje", type="string", maxLength=250, example="Mensaje actualizado"),
-     *             @OA\Property(property="FechaCreación", type="string", format="date-time", example="2023-01-01T12:00:00Z")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Contacto actualizado",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="Nombre", type="string"),
-     *             @OA\Property(property="Correo", type="string"),
-     *             @OA\Property(property="Mensaje", type="string"),
-     *             @OA\Property(property="FechaCreación", type="string", format="date-time")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor"
-     *     )
-     * )
-     */
 
     // Actualizar un contacto por ID
     public function update($id = null)
@@ -253,28 +146,6 @@ class ContactoController extends ResourceController
         }
     }
 
-     /**
-     * @OA\Delete(
-     *     path="/contacto/{id}",
-     *     tags={"Contacto"},
-     *     summary="Eliminar un contacto por ID",
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID del contacto a eliminar",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Contacto eliminado"
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Contacto no encontrado"
-     *     )
-     * )
-     */
 
     // Eliminar un contacto por ID
     public function delete($id = null)
