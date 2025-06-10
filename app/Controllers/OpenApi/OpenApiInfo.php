@@ -15,5 +15,4 @@ use OpenApi\Attributes as OA;
 )]
 class OpenApiInfo
 {
-    // Esta clase está vacía. Solo contiene anotaciones.
 }
