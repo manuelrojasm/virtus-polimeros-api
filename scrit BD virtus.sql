@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Usuario` (
   `TipoDoc` VARCHAR(250) NOT NULL,
   `Certificado` TINYINT NULL,
   `FechaCreacion` DATETIME NULL,
+  `FechaNacimiento` DATE NULL,
   `Estado` TINYINT NULL,
   PRIMARY KEY (`idUsuario`),
   INDEX `idRol_idx` (`idRol` ASC) VISIBLE,
@@ -72,8 +73,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Usuario` (
     FOREIGN KEY (`idRol`)
     REFERENCES `mydb`.`Rol` (`idRol`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
@@ -135,6 +136,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Pregunta` (
   `FechaCreacion` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `FechaActualizacion` DATETIME ON UPDATE CURRENT_TIMESTAMP,
   `Estado` TINYINT DEFAULT 1,
+  `RangoMin` INT NULL,
+  `RangoMax` INT NULL,
   PRIMARY KEY (`idPregunta`)
 ) ENGINE = InnoDB;
 

@@ -6,6 +6,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Models\UserModel;
 use CodeIgniter\Email\Email;
+use OpenApi\Attributes as OA;
 
 class AuthController extends ResourceController
 {
@@ -22,12 +23,63 @@ class AuthController extends ResourceController
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
     }
 
+    #[OA\Post(
+    path: "/auth/register",
+    tags: ["Autenticación"],
+    summary: "Registrar un nuevo usuario",
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: [
+                "Correo", "Contraseña", "idRol", "PrimerNombre", "PrimerApellido",
+                "Celular", "FechaNacimiento", "Genero", "Documento", "TipoDoc"
+            ],
+            properties: [
+                new OA\Property(property: "Correo", type: "string", format: "email", example: "usuario@example.com"),
+                new OA\Property(property: "Contraseña", type: "string", minLength: 6, example: "secreta123"),
+                new OA\Property(property: "idRol", type: "integer", example: 1, description: "1 = estudiante, 2 = admin"),
+                new OA\Property(property: "PrimerNombre", type: "string", example: "Carlos"),
+                new OA\Property(property: "PrimerApellido", type: "string", example: "Gómez"),
+                new OA\Property(property: "Celular", type: "string", example: "3123456789"),
+                new OA\Property(property: "FechaNacimiento", type: "string", format: "date", example: "2000-05-15"),
+                new OA\Property(property: "Genero", type: "string", example: "Masculino"),
+                new OA\Property(property: "Documento", type: "string", example: "12345678"),
+                new OA\Property(property: "TipoDoc", type: "string", example: "CC"),
+                new OA\Property(property: "Certificado", type: "string", example: "nombre_certificado.pdf", nullable: true),
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 201,
+            description: "Usuario registrado con éxito",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(property: "message", type: "string", example: "Usuario registrado con éxito")
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 200,
+            description: "Error de validación o usuario ya existente",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: false),
+                    new OA\Property(property: "message", type: "string", example: "El usuario ya existe")
+                ]
+            )
+        )
+    ]
+)]
+
     /**
      * Registro de usuario
      */
     public function register()
     {
         $json = $this->request->getJSON();
+        log_message('info', 'Datos recibidos en registro: ' . json_encode($json));
         
         // Validar que todos los campos requeridos estén presentes
         if (!isset($json->Correo) || empty($json->Correo)) {
@@ -48,8 +100,13 @@ class AuthController extends ResourceController
         if (!isset($json->Celular) || empty($json->Celular)) {
             return $this->respond(['success' => false, 'message' => 'El campo Celular es obligatorio'], 200);
         }
-        if (!isset($json->Edad) || empty($json->Edad) || !is_numeric($json->Edad)) {
-            return $this->respond(['success' => false, 'message' => 'El campo Edad es obligatorio y debe ser un número'], 200);
+        if (!isset($json->FechaNacimiento) || empty($json->FechaNacimiento)) {
+            return $this->respond(['success' => false, 'message' => 'El campo FechaNacimiento es obligatorio'], 200);
+        }
+
+        // Validar formato de fecha
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $json->FechaNacimiento)) {
+            return $this->respond(['success' => false, 'message' => 'El formato de FechaNacimiento es inválido (YYYY-MM-DD)'], 200);
         }
         if (!isset($json->Genero) || empty($json->Genero)) {
             return $this->respond(['success' => false, 'message' => 'El campo Genero es obligatorio'], 200);
@@ -95,7 +152,6 @@ class AuthController extends ResourceController
             'PrimerNombre' => $json->PrimerNombre,
             'PrimerApellido' => $json->PrimerApellido,
             'Celular' => $json->Celular,
-            'Edad' => $json->Edad,
             'Genero' => $json->Genero,
             'Correo' => $json->Correo,
             'Contraseña' => $hashedPassword,
@@ -103,12 +159,68 @@ class AuthController extends ResourceController
             'TipoDoc' => $json->TipoDoc, // Agregar el tipoDoc
             'Certificado' => $json->Certificado ?? null, // Opcional
             'Estado' => 1, // 1 = activo, 0 = inactivo
-            'FechaCreacion' => date('Y-m-d H:i:s')
+            'FechaCreacion' => date('Y-m-d H:i:s'),
+            'FechaNacimiento' => $json->FechaNacimiento,
         ]);
+
+        log_message('info', 'Datos a insertar: ' . json_encode([
+            'idRol' => $json->idRol,
+            'PrimerNombre' => $json->PrimerNombre,
+            'PrimerApellido' => $json->PrimerApellido,
+            'Celular' => $json->Celular,
+            'Genero' => $json->Genero,
+            'Correo' => $json->Correo,
+            'Contraseña' => $hashedPassword,
+            'Documento' => $json->Documento,  // Agregar el Documento
+            'TipoDoc' => $json->TipoDoc, // Agregar el tipoDoc
+            'Certificado' => $json->Certificado ?? null, // Opcional
+            'Estado' => 1, // 1 = activo, 0 = inactivo
+            'FechaCreacion' => date('Y-m-d H:i:s'),
+            'FechaNacimiento' => $json->FechaNacimiento,
+        ]));
         
         return $this->respond(['success' => true, 'message' => 'Usuario registrado con éxito'], 201);
     }
     
+
+    #[OA\Post(
+    path: "/login",
+    tags: ["Autenticación"],
+    summary: "Iniciar sesión",
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "Correo", type: "string", example: "usuario@ejemplo.com"),
+                new OA\Property(property: "Contraseña", type: "string", example: "123456")
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Respuesta del login",
+            content: new OA\JsonContent(
+                oneOf: [
+                    new OA\Schema( // Éxito
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "Login exitoso"),
+                            new OA\Property(property: "token", type: "string", example: "eyJhbGciOiJIUzI1NiIs...")
+                        ]
+                    ),
+                    new OA\Schema( // Fallo
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Contraseña incorrecta")
+                        ]
+                    )
+                ]
+            )
+        )
+    ]
+)]
+
     
     /**
      * Inicio de sesión con JWT
@@ -167,6 +279,34 @@ class AuthController extends ResourceController
         ], 200);
     }
 
+    #[OA\Post(
+    path: "/recoverPassword",
+    tags: ["Autenticación"],
+    summary: "Enviar recordatorio de acceso con nueva contraseña",
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["Correo"],
+            properties: [
+                new OA\Property(property: "Correo", type: "string", format: "email", example: "usuario@example.com"),
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Correo enviado con éxito o errores de validación",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(property: "message", type: "string", example: "Correo enviado con éxito")
+                ]
+            )
+        )
+    ]
+)]
+
+
     public function sendLoginReminder()
     {
         $json = $this->request->getJSON();
@@ -223,6 +363,56 @@ class AuthController extends ResourceController
         return $password;
     }
 
+    #[OA\Put(
+    path: "/usuario/perfil/{id}",
+    tags: ["Autenticación"],
+    summary: "Actualizar perfil de usuario",
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID del usuario a actualizar",
+            schema: new OA\Schema(type: "integer", example: 1)
+        )
+    ],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "PrimerNombre", type: "string", example: "Juan"),
+                new OA\Property(property: "PrimerApellido", type: "string", example: "Pérez"),
+                new OA\Property(property: "Correo", type: "string", format: "email", example: "juan@example.com"),
+                new OA\Property(property: "Celular", type: "string", example: "3001234567"),
+                new OA\Property(property: "FotoPerfil", type: "string", example: "https://example.com/imagen.jpg"),
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Perfil actualizado correctamente",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(property: "message", type: "string", example: "Perfil actualizado correctamente")
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 400,
+            description: "Datos inválidos",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "status", type: "integer", example: 400),
+                    new OA\Property(property: "error", type: "string", example: "Datos inválidos")
+                ]
+            )
+        )
+    ]
+)]
+
+
     public function updateProfile($id = null)
     {
         $userModel = new UserModel();
@@ -252,6 +442,63 @@ class AuthController extends ResourceController
             'message' => 'Perfil actualizado correctamente'
         ]);
     }
+
+    #[OA\Put(
+    path: "/usuario/cambiar-clave/{id}",
+    tags: ["Autenticación"],
+    summary: "Cambiar la contraseña del usuario",
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID del usuario",
+            schema: new OA\Schema(type: "integer", example: 1)
+        )
+    ],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "clave_actual", type: "string", example: "actual123"),
+                new OA\Property(property: "nueva_clave", type: "string", example: "nueva456")
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Contraseña actualizada correctamente",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(property: "message", type: "string", example: "Contraseña actualizada correctamente")
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 400,
+            description: "Datos incompletos o contraseña actual incorrecta",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: false),
+                    new OA\Property(property: "message", type: "string", example: "La contraseña actual es incorrecta")
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Usuario no encontrado",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: false),
+                    new OA\Property(property: "message", type: "string", example: "Usuario no encontrado")
+                ]
+            )
+        )
+    ]
+)]
+
 
     public function changePassword($id = null)
     {
@@ -290,6 +537,41 @@ class AuthController extends ResourceController
         ]);
     }
 
+    #[OA\Get(
+    path: "/usuario/estudiantes",
+    tags: ["Usuarios"],
+    summary: "Obtener lista de estudiantes",
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Lista de estudiantes",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(
+                        property: "data",
+                        type: "array",
+                        items: new OA\Items(
+                            type: "object",
+                            properties: [
+                                new OA\Property(property: "idUsuario", type: "integer", example: 5),
+                                new OA\Property(property: "PrimerNombre", type: "string", example: "Juan"),
+                                new OA\Property(property: "PrimerApellido", type: "string", example: "Pérez"),
+                                new OA\Property(property: "Correo", type: "string", example: "juan.perez@example.com"),
+                                new OA\Property(property: "Celular", type: "string", example: "3001234567"),
+                                new OA\Property(property: "FotoPerfil", type: "string", example: "foto.jpg"),
+                                new OA\Property(property: "idRol", type: "integer", example: 1),
+                                new OA\Property(property: "Estado", type: "integer", example: 1)
+                            ]
+                        )
+                    )
+                ]
+            )
+        )
+    ]
+)]
+
     public function getStudents()
     {
         $userModel = new UserModel();
@@ -300,6 +582,46 @@ class AuthController extends ResourceController
             'data' => $students
         ]);
     }
+
+    #[OA\Put(
+    path: "/usuario/estado-usuario-estudiante/{id}",
+    tags: ["Usuarios"],
+    summary: "Activar o desactivar un usuario",
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID del usuario a activar o desactivar",
+            schema: new OA\Schema(type: "integer", example: 3)
+        )
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Estado del usuario actualizado correctamente",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(property: "message", type: "string", example: "Estado del usuario actualizado"),
+                    new OA\Property(property: "nuevo_estado", type: "integer", example: 0)
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Usuario no encontrado",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: false),
+                    new OA\Property(property: "message", type: "string", example: "Usuario no encontrado")
+                ]
+            )
+        )
+    ]
+)]
 
     public function toggleUserStatus($id = null)
     {

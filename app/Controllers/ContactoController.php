@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\ContactoModel;
 use CodeIgniter\RESTful\ResourceController;
+use OpenApi\Attributes as OA;
 
 class ContactoController extends ResourceController
 {
@@ -24,6 +25,40 @@ class ContactoController extends ResourceController
         $this->setCorsHeaders();
         return $this->response->setStatusCode(200);
     }
+
+        #[OA\Post(
+        path: "/contacto",
+        tags: ["Contacto"],
+        summary: "Crear un nuevo contacto",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["Nombre", "Correo", "Mensaje"],
+                properties: [
+                    new OA\Property(property: "Nombre", type: "string", maxLength: 100, example: "Juan Pérez"),
+                    new OA\Property(property: "Correo", type: "string", format: "email", example: "juan@example.com"),
+                    new OA\Property(property: "Mensaje", type: "string", maxLength: 250, example: "Mensaje de contacto"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: "Contacto creado correctamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "Nombre", type: "string"),
+                        new OA\Property(property: "Correo", type: "string"),
+                        new OA\Property(property: "Mensaje", type: "string"),
+                        new OA\Property(property: "FechaCreación", type: "string", format: "date-time"),
+                        new OA\Property(property: "Estado", type: "integer", example: 1),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: "Errores de validación"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
 
     // Crear un contacto
     public function create()
@@ -82,6 +117,7 @@ class ContactoController extends ResourceController
         }
     }
 
+
     // Actualizar un contacto por ID
     public function update($id = null)
     {
@@ -109,6 +145,7 @@ class ContactoController extends ResourceController
             return $this->failServerError('No se pudo actualizar el contacto');
         }
     }
+
 
     // Eliminar un contacto por ID
     public function delete($id = null)
