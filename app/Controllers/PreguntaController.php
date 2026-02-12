@@ -162,7 +162,7 @@ public function create()
 }
 
 #[OA\Put(
-    path: "/preguntas/{id}",
+    path: "/preguntas/update/{id}",
     tags: ["Preguntas"],
     summary: "Actualizar una pregunta y sus opciones de respuesta",
     parameters: [

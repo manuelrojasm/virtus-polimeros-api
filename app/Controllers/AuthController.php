@@ -24,7 +24,7 @@ class AuthController extends ResourceController
     }
 
     #[OA\Post(
-    path: "/auth/register",
+    path: "/api/register",
     tags: ["Autenticación"],
     summary: "Registrar un nuevo usuario",
     requestBody: new OA\RequestBody(

@@ -20,3 +20,6 @@ $routes->get('preguntas', 'PreguntaController::index');
 $routes->post('preguntas', 'PreguntaController::create');
 $routes->put('preguntas/update/(:num)', 'PreguntaController::update/$1');
 $routes->delete('preguntas/(:num)', 'PreguntaController::delete/$1');
+$routes->get('evidencias', 'EvidenciasController::index');
+$routes->get('evidencias/activas', 'EvidenciasController::activas');
+$routes->get('evidencias/(:num)', 'EvidenciasController::show/$1');

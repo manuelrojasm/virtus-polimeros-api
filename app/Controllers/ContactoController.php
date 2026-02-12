@@ -89,6 +89,32 @@ class ContactoController extends ResourceController
         }
     }
 
+    #[OA\Get(
+        path: "/contacto",
+        tags: ["Contacto"],
+        summary: "Obtener todos los contactos",
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Lista de contactos",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(
+                        type: "object",
+                        properties: [
+                            new OA\Property(property: "idContacto", type: "integer"),
+                            new OA\Property(property: "Nombre", type: "string"),
+                            new OA\Property(property: "Correo", type: "string"),
+                            new OA\Property(property: "Mensaje", type: "string"),
+                            new OA\Property(property: "FechaCreación", type: "string", format: "date-time"),
+                            new OA\Property(property: "Estado", type: "integer"),
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "No se encontraron contactos"),
+        ]
+    )]
     // Obtener todos los contactos
     public function index()
     {
