@@ -22,4 +22,6 @@ $routes->put('preguntas/update/(:num)', 'PreguntaController::update/$1');
 $routes->delete('preguntas/(:num)', 'PreguntaController::delete/$1');
 $routes->get('evidencias', 'EvidenciasController::index');
 $routes->get('evidencias/activas', 'EvidenciasController::activas');
+$routes->post('evidencias', 'EvidenciasController::create');
+$routes->put('evidencias/(:num)', 'EvidenciasController::update/$1');
 $routes->get('evidencias/(:num)', 'EvidenciasController::show/$1');
