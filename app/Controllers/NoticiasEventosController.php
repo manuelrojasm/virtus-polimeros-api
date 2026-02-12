@@ -169,4 +169,109 @@ class NoticiasEventosController extends ResourceController
             'message' => 'Noticia/evento creado correctamente',
         ]);
     }
+
+    #[OA\Put(
+        path: "/noticias-eventos/{id}",
+        tags: ["Noticias y Eventos"],
+        summary: "Actualizar noticia o evento (solo admin)",
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "Titulo", type: "string", nullable: true),
+                    new OA\Property(property: "Resumen", type: "string", nullable: true),
+                    new OA\Property(property: "Contenido", type: "string", nullable: true),
+                    new OA\Property(property: "ImagenUrl", type: "string", nullable: true),
+                    new OA\Property(property: "Tipo", type: "string", enum: ["Noticia", "Evento", "Anuncio"], nullable: true),
+                    new OA\Property(property: "CategoriaId", type: "integer", nullable: true),
+                    new OA\Property(property: "FechaEventoInicio", type: "string", format: "date-time", nullable: true),
+                    new OA\Property(property: "FechaEventoFin", type: "string", format: "date-time", nullable: true),
+                    new OA\Property(property: "Ubicacion", type: "string", nullable: true),
+                    new OA\Property(property: "Modalidad", type: "string", enum: ["Presencial", "Virtual", "Mixto"], nullable: true),
+                    new OA\Property(property: "EnlaceEvento", type: "string", nullable: true),
+                    new OA\Property(property: "FechaPublicacion", type: "string", format: "date-time", nullable: true),
+                    new OA\Property(property: "FechaExpiracion", type: "string", format: "date-time", nullable: true),
+                    new OA\Property(property: "EsDestacado", type: "integer", nullable: true),
+                    new OA\Property(property: "EsPublico", type: "integer", nullable: true),
+                    new OA\Property(property: "Estado", type: "string", enum: ["Borrado", "Publicado", "Archivado"], nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Noticia/evento actualizado correctamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string", example: "Noticia/evento actualizado correctamente"),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: "Datos inválidos o no hay campos para actualizar"),
+            new OA\Response(response: 404, description: "Noticia/evento no encontrado"),
+            new OA\Response(response: 401, description: "No autorizado"),
+            new OA\Response(response: 403, description: "Se requiere rol de administrador"),
+        ]
+    )]
+    public function update($id = null)
+    {
+        $registro = $this->model->find($id);
+        if (!$registro) {
+            return $this->failNotFound('Noticia/evento no encontrado.');
+        }
+
+        $data = $this->request->getJSON(true);
+        if (!$data) {
+            return $this->fail('Datos inválidos', 400);
+        }
+
+        $validTipos = ['Noticia', 'Evento', 'Anuncio'];
+        if (!empty($data['Tipo']) && !in_array($data['Tipo'], $validTipos)) {
+            return $this->fail("Tipo debe ser uno de: " . implode(', ', $validTipos), 400);
+        }
+
+        $validModalidades = ['Presencial', 'Virtual', 'Mixto'];
+        if (!empty($data['Modalidad']) && !in_array($data['Modalidad'], $validModalidades)) {
+            return $this->fail("Modalidad debe ser uno de: " . implode(', ', $validModalidades), 400);
+        }
+
+        $validEstados = ['Borrado', 'Publicado', 'Archivado'];
+        if (!empty($data['Estado']) && !in_array($data['Estado'], $validEstados)) {
+            return $this->fail("Estado debe ser uno de: " . implode(', ', $validEstados), 400);
+        }
+
+        $allowed = [
+            'Titulo', 'Resumen', 'Contenido', 'ImagenUrl', 'Tipo', 'CategoriaId',
+            'FechaEventoInicio', 'FechaEventoFin', 'Ubicacion', 'Modalidad', 'EnlaceEvento',
+            'FechaPublicacion', 'FechaExpiracion', 'EsDestacado', 'EsPublico', 'Estado',
+        ];
+        $payload = array_intersect_key($data, array_flip($allowed));
+        if (empty($payload)) {
+            return $this->fail('No hay campos válidos para actualizar', 400);
+        }
+
+        if (isset($payload['CategoriaId'])) {
+            $payload['CategoriaId'] = (int) $payload['CategoriaId'];
+        }
+        if (isset($payload['EsDestacado'])) {
+            $payload['EsDestacado'] = (int) $payload['EsDestacado'];
+        }
+        if (isset($payload['EsPublico'])) {
+            $payload['EsPublico'] = (int) $payload['EsPublico'];
+        }
+
+        $payload['FechaModificacion'] = date('Y-m-d H:i:s');
+
+        if ($this->model->update($id, $payload) === false) {
+            return $this->fail('No se pudo actualizar el registro', 500);
+        }
+
+        return $this->respond([
+            'message' => 'Noticia/evento actualizado correctamente',
+        ]);
+    }
 }

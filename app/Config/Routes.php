@@ -28,7 +28,8 @@ $routes->get('evidencias/activas', 'EvidenciasController::activas');
 $routes->post('evidencias', 'EvidenciasController::create', ['filter' => ['auth', 'admin']]);
 $routes->put('evidencias/(:num)', 'EvidenciasController::update/$1', ['filter' => ['auth', 'admin']]);
 $routes->get('evidencias/(:num)', 'EvidenciasController::show/$1');
-// Noticias y Eventos: GET públicos; POST solo admin
+// Noticias y Eventos: GET públicos; POST/PUT solo admin
 $routes->get('noticias-eventos', 'NoticiasEventosController::index');
 $routes->get('noticias-eventos/(:num)', 'NoticiasEventosController::show/$1');
 $routes->post('noticias-eventos', 'NoticiasEventosController::create', ['filter' => ['auth', 'admin']]);
+$routes->put('noticias-eventos/(:num)', 'NoticiasEventosController::update/$1', ['filter' => ['auth', 'admin']]);
