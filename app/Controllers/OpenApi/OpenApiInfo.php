@@ -10,8 +10,20 @@ use OpenApi\Attributes as OA;
     description: "Endpoints aplicación Virtus Polimeros"
 )]
 #[OA\Server(
-    url: "http://localhost:8080/",  
+    url: "http://localhost:8080/",
     description: "Servidor local"
+)]
+#[OA\OpenApi(
+    security: [['bearerAuth' => []]],
+    components: new OA\Components(securitySchemes: [
+        new OA\SecurityScheme(
+            securityScheme: "bearerAuth",
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+            description: "Token JWT. Obtenerlo con POST /login (campo 'token' en la respuesta)."
+        )
+    ])
 )]
 class OpenApiInfo
 {
