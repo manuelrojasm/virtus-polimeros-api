@@ -134,9 +134,11 @@ class CursoService
             throw $e;
         }
 
+        $this->cursoModel->update($id, ['RutaCarpeta' => $rutaCarpeta]);
+
         return [
-            'idCurso'     => (int) $id,
-            'rutaCarpeta' => $rutaCarpeta,
+            'idCurso'       => (int) $id,
+            'rutaCarpeta'   => $rutaCarpeta,
             'nombreCarpeta' => $nombreCarpeta,
         ];
     }

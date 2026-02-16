@@ -31,6 +31,7 @@ class CursoController extends ResourceController
                             new OA\Property(property: "ImagenPortada", type: "string", nullable: true),
                             new OA\Property(property: "FechaCreacion", type: "string", format: "date-time"),
                             new OA\Property(property: "Estado", type: "integer", example: 1),
+                            new OA\Property(property: "RutaCarpeta", type: "string", nullable: true, example: "d:/app/writable/cursos/Introduccion_a_Polimeros"),
                         ]
                     )
                 )
@@ -69,6 +70,7 @@ class CursoController extends ResourceController
                     type: "object",
                     properties: [
                         new OA\Property(property: "idCurso", type: "integer", example: 1),
+                        new OA\Property(property: "rutaCarpeta", type: "string", example: "d:/app/writable/cursos/Introduccion_a_Polimeros"),
                         new OA\Property(property: "nombreCarpeta", type: "string", example: "Introduccion_a_Polimeros"),
                         new OA\Property(property: "message", type: "string", example: "Curso creado correctamente"),
                     ]
@@ -94,6 +96,7 @@ class CursoController extends ResourceController
 
         return $this->respondCreated([
             'idCurso'       => $resultado['idCurso'],
+            'rutaCarpeta'   => $resultado['rutaCarpeta'],
             'nombreCarpeta' => $resultado['nombreCarpeta'],
             'message'       => 'Curso creado correctamente',
         ]);

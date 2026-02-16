@@ -60,6 +60,9 @@ writable/session/*
 writable/uploads/*
 !writable/uploads/index.html
 
+writable/cursos/*
+!writable/cursos/index.html
+
 writable/debugbar/*
 !writable/debugbar/.gitkeep
 

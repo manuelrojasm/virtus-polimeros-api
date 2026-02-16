@@ -19,5 +19,6 @@ class CursoModel extends Model
         'FechaCreacion',
         'FechaModificacion',
         'Estado',
+        'RutaCarpeta',
     ];
 }
