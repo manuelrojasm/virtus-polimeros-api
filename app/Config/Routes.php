@@ -33,3 +33,9 @@ $routes->get('noticias-eventos', 'NoticiasEventosController::index');
 $routes->get('noticias-eventos/(:num)', 'NoticiasEventosController::show/$1');
 $routes->post('noticias-eventos', 'NoticiasEventosController::create', ['filter' => ['auth', 'admin']]);
 $routes->put('noticias-eventos/(:num)', 'NoticiasEventosController::update/$1', ['filter' => ['auth', 'admin']]);
+// Cursos: GET público; crear curso (y carpeta en servidor) solo admin
+$routes->get('cursos', 'CursoController::index');
+$routes->post('cursos', 'CursoController::create', ['filter' => ['auth', 'admin']]);
+// Secciones de curso: listar público; crear sección (subir PDF) solo admin
+$routes->get('cursos/(:num)/secciones', 'SeccionCursoController::index/$1');
+$routes->post('cursos/(:num)/secciones', 'SeccionCursoController::create/$1', ['filter' => ['auth', 'admin']]);

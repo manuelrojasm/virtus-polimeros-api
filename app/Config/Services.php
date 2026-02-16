@@ -19,14 +19,27 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    /*
-     * public static function example($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('example');
-     *     }
-     *
-     *     return new \CodeIgniter\Example();
-     * }
+    /**
+     * Servicio de creación y validación de cursos (incluye creación de carpeta en servidor).
      */
+    public static function curso($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('curso');
+        }
+
+        return new \App\Services\CursoService();
+    }
+
+    /**
+     * Servicio de secciones de curso (crear secciones con archivos PDF en la carpeta del curso).
+     */
+    public static function seccionCurso($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('seccionCurso');
+        }
+
+        return new \App\Services\SeccionCursoService();
+    }
 }
