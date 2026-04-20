@@ -32,30 +32,31 @@ class CursoService
     }
 
     /**
-     * Genera un nombre de carpeta seguro a partir del nombre del curso.
+     * Obtiene el nombre de la carpeta a partir del ID del curso.
      */
-    public function nombreCarpetaDesdeNombre(string $nombre): string
+    public function nombreCarpetaDesdeId(int $idCurso): string
     {
-        $nombre = trim($nombre);
-        $nombre = preg_replace('/[^\p{L}\p{N}\s_\-]/u', '', $nombre);
-        $nombre = preg_replace('/\s+/', '_', $nombre);
-        return $nombre === '' ? 'curso_autogenerado_' . time() : $nombre;
+        if ($idCurso <= 0) {
+            throw new RuntimeException('ID de curso inválido para crear carpeta.');
+        }
+
+        return (string) $idCurso;
     }
 
     /**
-     * Ruta absoluta de la carpeta de un curso por nombre normalizado.
+     * Ruta absoluta de la carpeta de un curso por ID.
      */
-    public function rutaCarpetaCurso(string $nombreCarpeta): string
+    public function rutaCarpetaCurso(int $idCurso): string
     {
-        return $this->cursosBasePath . $nombreCarpeta;
+        return $this->cursosBasePath . $this->nombreCarpetaDesdeId($idCurso);
     }
 
     /**
      * Comprueba si la carpeta del curso ya existe en el servidor.
      */
-    public function existeCarpetaCurso(string $nombreCarpeta): bool
+    public function existeCarpetaCurso(int $idCurso): bool
     {
-        $ruta = $this->rutaCarpetaCurso($nombreCarpeta);
+        $ruta = $this->rutaCarpetaCurso($idCurso);
         return is_dir($ruta);
     }
 
@@ -65,7 +66,7 @@ class CursoService
      * @return string Ruta absoluta de la carpeta creada
      * @throws RuntimeException Si no se puede crear la carpeta
      */
-    public function crearCarpetaCurso(string $nombreCarpeta): string
+    public function crearCarpetaCurso(int $idCurso): string
     {
         if (!is_dir($this->cursosBasePath)) {
             if (!@mkdir($this->cursosBasePath, 0755, true)) {
@@ -73,7 +74,7 @@ class CursoService
             }
         }
 
-        $ruta = $this->rutaCarpetaCurso($nombreCarpeta);
+        $ruta = $this->rutaCarpetaCurso($idCurso);
 
         if (is_dir($ruta)) {
             throw new RuntimeException('La carpeta del curso ya existe en el servidor.');
@@ -89,7 +90,7 @@ class CursoService
     /**
      * Crea un nuevo curso: valida nombre único, inserta en BD y crea la carpeta.
      *
-     * @param array $data Datos del curso: Nombre, Descripcion, ImagenPortada (opc), Estado (opc)
+     * @param array $data Datos del curso: Nombre, Descripcion, Estado (opc). La portada se sube con POST /cursos/{id}/portada.
      * @return array ['idCurso' => int, 'rutaCarpeta' => string]
      * @throws RuntimeException Si la validación falla o no se puede crear la carpeta
      */
@@ -105,17 +106,11 @@ class CursoService
             throw new RuntimeException('Ya existe un curso con ese nombre.');
         }
 
-        $nombreCarpeta = $this->nombreCarpetaDesdeNombre($nombre);
-
-        if ($this->existeCarpetaCurso($nombreCarpeta)) {
-            throw new RuntimeException('Ya existe una carpeta con ese nombre en el servidor.');
-        }
-
         $now = date('Y-m-d H:i:s');
         $payload = [
             'Nombre'           => $nombre,
             'Descripcion'      => $data['Descripcion'] ?? '',
-            'ImagenPortada'    => $data['ImagenPortada'] ?? null,
+            'ImagenPortada'    => null,
             'FechaCreacion'    => $now,
             'FechaModificacion'=> $now,
             'Estado'           => isset($data['Estado']) ? (int) $data['Estado'] : 1,
@@ -128,7 +123,7 @@ class CursoService
         }
 
         try {
-            $rutaCarpeta = $this->crearCarpetaCurso($nombreCarpeta);
+            $rutaCarpeta = $this->crearCarpetaCurso((int) $id);
         } catch (RuntimeException $e) {
             $this->cursoModel->delete($id);
             throw $e;
@@ -137,9 +132,9 @@ class CursoService
         $this->cursoModel->update($id, ['RutaCarpeta' => $rutaCarpeta]);
 
         return [
-            'idCurso'       => (int) $id,
-            'rutaCarpeta'   => $rutaCarpeta,
-            'nombreCarpeta' => $nombreCarpeta,
+            'idCurso'        => (int) $id,
+            'rutaCarpeta'    => $rutaCarpeta,
+            'carpetaCursoId' => (int) $id,
         ];
     }
 }

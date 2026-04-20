@@ -42,4 +42,28 @@ class Services extends BaseService
 
         return new \App\Services\SeccionCursoService();
     }
+
+    /**
+     * Servicio de preguntas sugeridas por PDF (OpenAI). Requiere OPENAI_API_KEY en .env.
+     */
+    public static function preguntasSugeridas($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('preguntasSugeridas');
+        }
+
+        return new \App\Services\PreguntasSugeridasService();
+    }
+
+    /**
+     * Subida de imágenes públicas (perfil, portadas) con límite de tamaño y tipos permitidos.
+     */
+    public static function imageUpload($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('imageUpload');
+        }
+
+        return new \App\Services\ImageUploadService();
+    }
 }

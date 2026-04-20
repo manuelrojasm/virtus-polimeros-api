@@ -1,0 +1,4 @@
+# Evitar ejecución de scripts si alguien subiera un archivo con extensión peligrosa
+<FilesMatch "\.(?i:php|phtml|phar)$">
+    Require all denied
+</FilesMatch>

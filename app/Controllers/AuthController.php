@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Controllers;
+use App\Models\UserModel;
+use App\Services\ImageUploadService;
+use CodeIgniter\Email\Email;
 use CodeIgniter\RESTful\ResourceController;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use App\Models\UserModel;
-use CodeIgniter\Email\Email;
 use OpenApi\Attributes as OA;
+use RuntimeException;
 
 class AuthController extends ResourceController
 {
@@ -367,6 +369,8 @@ class AuthController extends ResourceController
     path: "/usuario/perfil/{id}",
     tags: ["Autenticación"],
     summary: "Actualizar perfil de usuario",
+    description: "Solo el propio usuario (id del token = id de la ruta). Para subir foto use POST /usuario/perfil/{id}/foto. Para quitar foto envíe `FotoPerfil: null`.",
+    security: [["bearerAuth" => []]],
     parameters: [
         new OA\Parameter(
             name: "id",
@@ -384,7 +388,7 @@ class AuthController extends ResourceController
                 new OA\Property(property: "PrimerApellido", type: "string", example: "Pérez"),
                 new OA\Property(property: "Correo", type: "string", format: "email", example: "juan@example.com"),
                 new OA\Property(property: "Celular", type: "string", example: "3001234567"),
-                new OA\Property(property: "FotoPerfil", type: "string", example: "https://example.com/imagen.jpg"),
+                new OA\Property(property: "FotoPerfil", type: "string", nullable: true, description: "Solo null para quitar la foto. Para subir imagen use POST /usuario/perfil/{id}/foto (multipart, campo foto)."),
             ]
         )
     ),
@@ -401,45 +405,195 @@ class AuthController extends ResourceController
         ),
         new OA\Response(
             response: 400,
-            description: "Datos inválidos",
+            description: "Sin campos válidos, JSON inválido o intento de enviar URL de foto (usar POST /foto)",
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: "status", type: "integer", example: 400),
-                    new OA\Property(property: "error", type: "string", example: "Datos inválidos")
+                    new OA\Property(property: "success", type: "boolean", example: false),
+                    new OA\Property(property: "message", type: "string", example: "No hay campos válidos para actualizar"),
                 ]
             )
-        )
+        ),
+        new OA\Response(
+            response: 403,
+            description: "El id de la ruta no coincide con el usuario del token",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "success", type: "boolean", example: false),
+                    new OA\Property(property: "message", type: "string", example: "No autorizado"),
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Usuario no encontrado",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "status", type: "integer", example: 404),
+                    new OA\Property(property: "messages", type: "object", nullable: true),
+                ]
+            )
+        ),
     ]
 )]
 
 
     public function updateProfile($id = null)
     {
-        $userModel = new UserModel();
-        $data = $this->request->getJSON(true); // true = return as array
+        $authId = (int) ($this->request->authUser['id'] ?? 0);
+        if ($authId !== (int) $id) {
+            return $this->respond(['success' => false, 'message' => 'No autorizado'], 403);
+        }
 
-        if (!$data) {
+        $userModel = new UserModel();
+        $user = $userModel->find($id);
+        if (! $user) {
+            return $this->failNotFound('Usuario no encontrado');
+        }
+
+        $data = $this->request->getJSON(true);
+        if (! $data) {
             return $this->fail('Datos inválidos');
         }
 
-        // Solo actualizamos campos permitidos
         $fields = [
             'PrimerNombre',
             'PrimerApellido',
             'Correo',
             'Celular',
-            'FotoPerfil'
         ];
 
         $datosActualizados = array_intersect_key($data, array_flip($fields));
 
-        if (!$userModel->update($id, $datosActualizados)) {
+        if (array_key_exists('FotoPerfil', $data)) {
+            $valor = $data['FotoPerfil'];
+            if ($valor !== null && $valor !== '') {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'La foto de perfil se sube con POST usuario/perfil/{id}/foto (multipart, campo: foto, máx. 2 MB).',
+                ], 400);
+            }
+            \Config\Services::imageUpload()->removeStoredPublicImage($user['FotoPerfil'] ?? null);
+            $datosActualizados['FotoPerfil'] = null;
+        }
+
+        if ($datosActualizados === []) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'No hay campos válidos para actualizar',
+            ], 400);
+        }
+
+        if (! $userModel->update($id, $datosActualizados)) {
             return $this->fail('No se pudo actualizar el usuario');
         }
 
         return $this->respond([
             'success' => true,
-            'message' => 'Perfil actualizado correctamente'
+            'message' => 'Perfil actualizado correctamente',
+        ]);
+    }
+
+    #[OA\Post(
+        path: "/usuario/perfil/{id}/foto",
+        tags: ["Autenticación"],
+        summary: "Subir foto de perfil",
+        description: "Multipart con campo `foto`. Tamaño máximo 2 MB. Tipos: JPEG, PNG, WebP, GIF. Sustituye la imagen anterior si existía (ruta bajo `uploads/usuarios/`). Requiere que el id de la ruta sea el del usuario autenticado.",
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                description: "Debe coincidir con el claim `id` del JWT",
+                schema: new OA\Schema(type: "integer", example: 1)
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "multipart/form-data",
+                schema: new OA\Schema(
+                    required: ["foto"],
+                    properties: [
+                        new OA\Property(
+                            property: "foto",
+                            type: "string",
+                            format: "binary",
+                            description: "Archivo de imagen"
+                        ),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Foto guardada; `FotoPerfil` es la ruta relativa respecto a `public/`",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Foto de perfil actualizada"),
+                        new OA\Property(property: "FotoPerfil", type: "string", example: "uploads/usuarios/a1b2c3d4e5f6789012345678abcdef01.jpg"),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Sin archivo, tipo no permitido o supera 2 MB",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "La imagen supera el tamaño máximo permitido (2 MB)."),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 403,
+                description: "No autorizado",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "No autorizado"),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: "Usuario no encontrado"),
+        ]
+    )]
+    public function uploadProfilePhoto($id = null)
+    {
+        $authId = (int) ($this->request->authUser['id'] ?? 0);
+        if ($authId !== (int) $id) {
+            return $this->respond(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->find($id);
+        if (! $user) {
+            return $this->failNotFound('Usuario no encontrado');
+        }
+
+        $file = $this->request->getFile('foto');
+        if (! $file || ! $file->isValid()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Envíe un archivo de imagen en el campo "foto" (JPEG, PNG, WebP o GIF, máx. 2 MB).',
+            ], 400);
+        }
+
+        try {
+            $svc = \Config\Services::imageUpload();
+            $svc->removeStoredPublicImage($user['FotoPerfil'] ?? null);
+            $rel = $svc->saveFromUpload($file, 'usuarios', ImageUploadService::MAX_PERFIL_BYTES);
+            $userModel->update($id, ['FotoPerfil' => $rel]);
+        } catch (RuntimeException $e) {
+            return $this->respond(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+
+        return $this->respond([
+            'success'       => true,
+            'message'       => 'Foto de perfil actualizada',
+            'FotoPerfil'    => $rel,
         ]);
     }
 
@@ -502,6 +656,11 @@ class AuthController extends ResourceController
 
     public function changePassword($id = null)
     {
+        $authId = (int) ($this->request->authUser['id'] ?? 0);
+        if ($authId !== (int) $id) {
+            return $this->respond(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
         $userModel = new UserModel();
         $data = $this->request->getJSON(true);
 

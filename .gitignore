@@ -63,6 +63,11 @@ writable/uploads/*
 writable/cursos/*
 !writable/cursos/index.html
 
+# Imágenes servidas desde public (perfil, portadas)
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/.htaccess
+
 writable/debugbar/*
 !writable/debugbar/.gitkeep
 

@@ -14,6 +14,15 @@ class PreguntaController extends ResourceController
     path: "/preguntas",
     tags: ["Preguntas"],
     summary: "Obtener todas las preguntas con sus opciones de respuesta",
+    parameters: [
+        new OA\Parameter(
+            name: "idCurso",
+            in: "query",
+            required: false,
+            description: "Filtra preguntas por curso",
+            schema: new OA\Schema(type: "integer", example: 3)
+        )
+    ],
     responses: [
         new OA\Response(
             response: 200,
@@ -49,8 +58,16 @@ class PreguntaController extends ResourceController
     {
         $preguntaModel = new PreguntaModel();
         $opcionModel = new OpcionRespuestaModel();
+        $idCurso = $this->request->getGet('idCurso');
 
-        $preguntas = $preguntaModel->findAll();
+        if ($idCurso !== null && $idCurso !== '') {
+            if (!ctype_digit((string) $idCurso)) {
+                return $this->failValidationErrors('El parámetro idCurso debe ser numérico.');
+            }
+            $preguntas = $preguntaModel->where('idCurso', (int) $idCurso)->findAll();
+        } else {
+            $preguntas = $preguntaModel->findAll();
+        }
 
         foreach ($preguntas as &$pregunta) {
             $pregunta['Opciones'] = $opcionModel->where('idPregunta', $pregunta['idPregunta'])->findAll();
@@ -67,8 +84,9 @@ class PreguntaController extends ResourceController
         required: true,
         content: new OA\JsonContent(
             type: "object",
-            required: ["pregunta", "tipo"],
+            required: ["idCurso", "pregunta", "tipo"],
             properties: [
+                new OA\Property(property: "idCurso", type: "integer", example: 3),
                 new OA\Property(property: "pregunta", type: "string", example: "¿Cuál es la capital de Francia?"),
                 new OA\Property(property: "descripcion", type: "string", example: "Pregunta de geografía", nullable: true),
                 new OA\Property(property: "tipo", type: "string", example: "seleccion_unica"),
@@ -128,6 +146,7 @@ public function create()
 
     // Preparar datos base de la pregunta
     $preguntaData = [
+        'idCurso' => isset($data['idCurso']) ? (int) $data['idCurso'] : null,
         'Pregunta' => $data['pregunta'],
         'Descripcion' => $data['descripcion'] ?? '',
         'Tipo' => $data['tipo'],
@@ -135,10 +154,13 @@ public function create()
         'Estado' => $data['estado'] ?? 1,
     ];
 
-    // Si es de tipo 'rango', agregar los valores mínimo y máximo
-  
-        $preguntaData['RangoMin'] = $data['rango'][0];
-        $preguntaData['RangoMax'] = $data['rango'][1];
+    if (
+        isset($data['tipo']) && $data['tipo'] === 'rango'
+        && isset($data['rango']) && is_array($data['rango']) && count($data['rango']) >= 2
+    ) {
+        $preguntaData['RangoMin'] = (int) $data['rango'][0];
+        $preguntaData['RangoMax'] = (int) $data['rango'][1];
+    }
 
     // Insertar la pregunta
     $id = $preguntaModel->insert($preguntaData);
@@ -178,8 +200,9 @@ public function create()
         required: true,
         content: new OA\JsonContent(
             type: "object",
-            required: ["pregunta", "tipo", "opciones"],
+            required: ["idCurso", "pregunta", "tipo", "opciones"],
             properties: [
+                new OA\Property(property: "idCurso", type: "integer", example: 3),
                 new OA\Property(property: "pregunta", type: "string", example: "¿Cuál es la capital de Alemania?"),
                 new OA\Property(property: "descripcion", type: "string", example: "Pregunta sobre Europa", nullable: true),
                 new OA\Property(property: "tipo", type: "string", example: "seleccion_unica"),
@@ -242,6 +265,7 @@ public function create()
 
     // Actualizar pregunta
     $datosPregunta = [
+        'idCurso' => isset($data['idCurso']) ? (int) $data['idCurso'] : null,
         'Pregunta' => $data['pregunta'],
         'Descripcion' => $data['descripcion'] ?? '',
         'Tipo' => $data['tipo'],
@@ -249,8 +273,15 @@ public function create()
         
     ];
 
-    $datosPregunta['RangoMin'] = $data['rango'][0];
-    $datosPregunta['RangoMax'] = $data['rango'][1];
+    // Si llega rango en el payload, lo actualizamos sin depender del literal exacto de "tipo".
+    if (isset($data['rango']) && is_array($data['rango']) && count($data['rango']) >= 2) {
+        $datosPregunta['RangoMin'] = (int) $data['rango'][0];
+        $datosPregunta['RangoMax'] = (int) $data['rango'][1];
+    } else {
+        // Si no llega rango, limpiamos valores previos para evitar datos inconsistentes.
+        $datosPregunta['RangoMin'] = null;
+        $datosPregunta['RangoMax'] = null;
+    }
 
     if (!$preguntaModel->update($id, $datosPregunta)) {
         return $this->fail('Error al actualizar la pregunta');

@@ -60,6 +60,12 @@ database.default.password = tu_contraseña
 database.default.DBDriver = MySQLi
 ```
 
+**Preguntas sugeridas (OpenAI):** Para usar el endpoint `GET /cursos/{id}/preguntas-sugeridas` (generar preguntas a partir de los PDF de cada sección), añade en `.env`:
+
+```env
+OPENAI_API_KEY = sk-tu-clave-de-openai
+```
+
 ### **4. Ejecutar las Migraciones (si las tienes)**
 
 Si tienes migraciones de base de datos, ejecuta el siguiente comando para que se creen las tablas en tu base de datos:
