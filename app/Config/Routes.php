@@ -36,6 +36,7 @@ $routes->post('noticias-eventos', 'NoticiasEventosController::create', ['filter'
 $routes->put('noticias-eventos/(:num)', 'NoticiasEventosController::update/$1', ['filter' => ['auth', 'admin']]);
 // Cursos: GET público; crear curso (y carpeta en servidor) solo admin
 $routes->get('cursos', 'CursoController::index');
+$routes->get('cursos/activos-con-preguntas', 'CursoController::activosConPreguntas', ['filter' => 'auth']);
 $routes->get('cursos/(:num)', 'CursoController::show/$1');
 $routes->post('cursos', 'CursoController::create', ['filter' => ['auth', 'admin']]);
 $routes->put('cursos/(:num)', 'CursoController::update/$1', ['filter' => ['auth', 'admin']]);
@@ -49,3 +50,6 @@ $routes->post('cursos/(:num)/secciones/(:num)', 'SeccionCursoController::update/
 $routes->put('cursos/(:num)/secciones/(:num)/eliminar', 'SeccionCursoController::delete/$1/$2', ['filter' => ['auth', 'admin']]);
 // Preguntas sugeridas por PDF (OpenAI): solo admin
 $routes->get('cursos/(:num)/preguntas-sugeridas', 'PreguntasSugeridasController::index/$1', ['filter' => ['auth', 'admin']]);
+// Desarrollo del curso por estudiante: inicio y finalización (usuario autenticado)
+$routes->post('cursos/(:num)/inicio', 'CursoDesarrolloController::inicio/$1', ['filter' => 'auth']);
+$routes->post('cursos/(:num)/finalizacion', 'CursoDesarrolloController::finalizacion/$1', ['filter' => 'auth']);

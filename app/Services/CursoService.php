@@ -90,7 +90,7 @@ class CursoService
     /**
      * Crea un nuevo curso: valida nombre único, inserta en BD y crea la carpeta.
      *
-     * @param array $data Datos del curso: Nombre, Descripcion, Estado (opc). La portada se sube con POST /cursos/{id}/portada.
+     * @param array $data Datos del curso: Nombre, Descripcion, Estado, PorcentajeAprobacion y CantidadPreguntas (opc). La portada se sube con POST /cursos/{id}/portada.
      * @return array ['idCurso' => int, 'rutaCarpeta' => string]
      * @throws RuntimeException Si la validación falla o no se puede crear la carpeta
      */
@@ -114,6 +114,8 @@ class CursoService
             'FechaCreacion'    => $now,
             'FechaModificacion'=> $now,
             'Estado'           => isset($data['Estado']) ? (int) $data['Estado'] : 1,
+            'PorcentajeAprobacion' => isset($data['PorcentajeAprobacion']) ? (int) $data['PorcentajeAprobacion'] : 1,
+            'CantidadPreguntas'    => isset($data['CantidadPreguntas']) ? (int) $data['CantidadPreguntas'] : 1,
         ];
 
         $id = $this->cursoModel->insert($payload);

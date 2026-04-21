@@ -20,5 +20,7 @@ class CursoModel extends Model
         'FechaModificacion',
         'Estado',
         'RutaCarpeta',
+        'PorcentajeAprobacion',
+        'CantidadPreguntas',
     ];
 }

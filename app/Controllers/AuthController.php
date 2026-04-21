@@ -261,15 +261,12 @@ class AuthController extends ResourceController
         }
     
         $payload = [
-            'id' => $user['idUsuario'],
-            'idRol' => $user['idRol'],
-            'Nombre' => $user['PrimerNombre'],
+            'id'       => $user['idUsuario'],
+            'idRol'    => $user['idRol'],
+            'Nombre'   => $user['PrimerNombre'],
             'Apellido' => $user['PrimerApellido'],
-            'Celular' => $user['Celular'],
-            'Correo' => $user['Correo'],
-            'FotoPerfil' => $user['FotoPerfil'],
-            'iat' => time(),
-            'exp' => time() + 3600
+            'iat'      => time(),
+            'exp'      => time() + 3600,
         ];
         
         $token = JWT::encode($payload, $this->key, 'HS256');

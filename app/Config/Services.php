@@ -66,4 +66,16 @@ class Services extends BaseService
 
         return new \App\Services\ImageUploadService();
     }
+
+    /**
+     * Servicio de desarrollo del curso por estudiante (inicio y finalización).
+     */
+    public static function cursoDesarrollo($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cursoDesarrollo');
+        }
+
+        return new \App\Services\CursoDesarrolloService();
+    }
 }
