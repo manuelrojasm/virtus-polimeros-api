@@ -801,5 +801,89 @@ class AuthController extends ResourceController
         ]);
     }
 
+    #[OA\Put(
+        path: "/usuario/tratamiento-datos/{id}",
+        tags: ["Usuarios"],
+        summary: "Aceptar tratamiento automático de datos (AutoTraDatos)",
+        description: "Establece AutoTraDatos en true (1) para el usuario indicado. Solo el usuario autenticado puede actualizar su propio id. Requiere JWT.",
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del usuario (debe coincidir con el claim id del JWT)",
+                schema: new OA\Schema(type: "integer", example: 1)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Tratamiento de datos aceptado",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Tratamiento de datos aceptado correctamente"),
+                        new OA\Property(property: "AutoTraDatos", type: "boolean", example: true),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 403,
+                description: "El id de la ruta no coincide con el usuario del token",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "No autorizado"),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Usuario no encontrado",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Usuario no encontrado"),
+                    ]
+                )
+            ),
+        ]
+    )]
+    public function acceptAutoTraDatos($id = null)
+    {
+        $authId = (int) ($this->request->authUser['id'] ?? 0);
+        if ($authId !== (int) $id) {
+            return $this->respond(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->find($id);
+        if (! $user) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Usuario no encontrado',
+            ], 404);
+        }
+
+        if ((int) ($user['AutoTraDatos'] ?? 0) === 1) {
+            return $this->respond([
+                'success' => true,
+                'message' => 'El tratamiento de datos ya estaba aceptado',
+                'AutoTraDatos' => true,
+            ]);
+        }
+
+        if (! $userModel->update($id, ['AutoTraDatos' => 1])) {
+            return $this->fail('No se pudo actualizar el tratamiento de datos');
+        }
+
+        return $this->respond([
+            'success' => true,
+            'message' => 'Tratamiento de datos aceptado correctamente',
+            'AutoTraDatos' => true,
+        ]);
+    }
+
 
 }

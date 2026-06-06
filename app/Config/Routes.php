@@ -16,6 +16,7 @@ $routes->post('recoverPassword', 'AuthController::sendLoginReminder');
 $routes->put('usuario/perfil/(:num)', 'AuthController::updateProfile/$1', ['filter' => 'auth']);
 $routes->post('usuario/perfil/(:num)/foto', 'AuthController::uploadProfilePhoto/$1', ['filter' => 'auth']);
 $routes->put('usuario/cambiar-clave/(:num)', 'AuthController::changePassword/$1', ['filter' => 'auth']);
+$routes->put('usuario/tratamiento-datos/(:num)', 'AuthController::acceptAutoTraDatos/$1', ['filter' => 'auth']);
 $routes->get('usuario/estudiantes', 'AuthController::getStudents', ['filter' => ['auth', 'admin']]);
 $routes->put('usuario/estado-usuario-estudiante/(:num)', 'AuthController::toggleUserStatus/$1', ['filter' => ['auth', 'admin']]);
 // Preguntas: GET público; crear/actualizar/eliminar solo admin

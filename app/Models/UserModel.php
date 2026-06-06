@@ -19,6 +19,7 @@ class UserModel extends Model
         'Correo',
         'Contraseña',
         'Certificado',
+        'AutoTraDatos',
         'FechaCreacion',
         'TipoDoc',
         'Documento',
