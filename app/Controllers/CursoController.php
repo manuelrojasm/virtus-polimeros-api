@@ -106,7 +106,7 @@ class CursoController extends ResourceController
         }
 
         $model = new CursoModel();
-        $builder = $model->builder('Curso c');
+        $builder = $model->builder('curso c');
         $builder
             ->select('
                 c.idCurso,
@@ -123,9 +123,9 @@ class CursoController extends ResourceController
                 cde.Aprobo,
                 cde.VariablesSeguimiento
             ')
-            ->join('Pregunta p', 'p.idCurso = c.idCurso AND p.Estado = 1', 'inner')
+            ->join('pregunta p', 'p.idCurso = c.idCurso AND p.Estado = 1', 'inner')
             ->join(
-                'CursoDesarrolloEstudiante cde',
+                'cursodesarrolloestudiante cde',
                 'cde.idCurso = c.idCurso AND cde.idUsuario = ' . $idUsuario,
                 'left'
             )

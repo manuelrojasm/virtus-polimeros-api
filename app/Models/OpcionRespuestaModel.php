@@ -5,7 +5,7 @@ use CodeIgniter\Model;
 
 class OpcionRespuestaModel extends Model
 {
-    protected $table = 'OpcionRespuesta';
+    protected $table = 'opcionrespuesta';
     protected $primaryKey = 'idOpcionRespuesta';
     protected $allowedFields = ['idPregunta', 'Respuesta', 'Correcta', 'FechaCreacion', 'Estado'];
 }

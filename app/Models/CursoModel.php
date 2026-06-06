@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class CursoModel extends Model
 {
-    protected $table            = 'Curso';
+    protected $table            = 'curso';
     protected $primaryKey       = 'idCurso';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
