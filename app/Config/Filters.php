@@ -8,6 +8,7 @@ use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\SecureHeaders;
+use App\Filters\Sanitize;
 
 class Filters extends BaseConfig
 {
@@ -27,6 +28,7 @@ class Filters extends BaseConfig
         'cors'    => \App\Filters\Cors::class,
         'auth'    => \App\Filters\AuthFilter::class,
         'admin'   => \App\Filters\AdminFilter::class,
+        'sanitize' => Sanitize::class,
     ];
 
     /**
@@ -39,8 +41,9 @@ class Filters extends BaseConfig
         'before' => [
             'cors',
             // 'honeypot',
-            // 'csrf',
-            // 'invalidchars',
+            // 'csrf', // Deshabilitado: la API es JWT bearer stateless, no usa cookies/sesión.
+            'invalidchars',
+            'sanitize',
         ],
         'after' => [
             'toolbar',
