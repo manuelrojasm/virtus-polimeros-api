@@ -16,6 +16,7 @@ class SeccionCursoModel extends Model
         'idCurso',
         'Nombre',
         'RutaArchivo',
+        'Resumen',
         'Orden',
         'FechaCreacion',
         'FechaModificacion',

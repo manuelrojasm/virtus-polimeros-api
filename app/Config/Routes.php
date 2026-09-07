@@ -49,7 +49,7 @@ $routes->post('cursos/(:num)/secciones', 'SeccionCursoController::create/$1', ['
 $routes->put('cursos/(:num)/secciones/(:num)', 'SeccionCursoController::update/$1/$2', ['filter' => ['auth', 'admin']]);
 $routes->post('cursos/(:num)/secciones/(:num)', 'SeccionCursoController::update/$1/$2', ['filter' => ['auth', 'admin']]);
 $routes->put('cursos/(:num)/secciones/(:num)/eliminar', 'SeccionCursoController::delete/$1/$2', ['filter' => ['auth', 'admin']]);
-// Preguntas sugeridas por PDF (OpenAI): solo admin
+// Preguntas sugeridas por curso (Claude): solo admin
 $routes->get('cursos/(:num)/preguntas-sugeridas', 'PreguntasSugeridasController::index/$1', ['filter' => ['auth', 'admin']]);
 // Desarrollo del curso por estudiante: inicio y finalización (usuario autenticado)
 $routes->post('cursos/(:num)/inicio', 'CursoDesarrolloController::inicio/$1', ['filter' => 'auth']);

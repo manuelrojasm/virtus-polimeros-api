@@ -44,7 +44,7 @@ class Services extends BaseService
     }
 
     /**
-     * Servicio de preguntas sugeridas por PDF (OpenAI). Requiere OPENAI_API_KEY en .env.
+     * Servicio de preguntas sugeridas por curso (Claude). Requiere ANTHROPIC_API_KEY en .env.
      */
     public static function preguntasSugeridas($getShared = true)
     {
@@ -53,6 +53,30 @@ class Services extends BaseService
         }
 
         return new \App\Services\PreguntasSugeridasService();
+    }
+
+    /**
+     * Cliente delgado para la API de Mensajes de Anthropic (Claude). Requiere ANTHROPIC_API_KEY en .env.
+     */
+    public static function anthropic($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('anthropic');
+        }
+
+        return new \App\Services\AnthropicService();
+    }
+
+    /**
+     * Extrae texto de PDFs y genera resúmenes con Claude, usado al subir secciones de curso.
+     */
+    public static function resumenPdf($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('resumenPdf');
+        }
+
+        return new \App\Services\ResumenPdfService();
     }
 
     /**

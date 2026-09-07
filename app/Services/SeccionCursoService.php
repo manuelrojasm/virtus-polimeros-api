@@ -9,18 +9,24 @@ use RuntimeException;
 
 class SeccionCursoService
 {
+    /** Tamaño máximo del PDF en bytes (50 MB límite típico de la IA; usamos 20 MB por seguridad). */
+    private const MAX_BYTES_PDF = 20 * 1024 * 1024;
+
     protected SeccionCursoModel $seccionModel;
     protected CursoModel $cursoModel;
     protected CursoService $cursoService;
+    protected ResumenPdfService $resumenPdfService;
 
     public function __construct(
         ?SeccionCursoModel $seccionModel = null,
         ?CursoModel $cursoModel = null,
-        ?CursoService $cursoService = null
+        ?CursoService $cursoService = null,
+        ?ResumenPdfService $resumenPdfService = null
     ) {
-        $this->seccionModel  = $seccionModel ?? new SeccionCursoModel();
-        $this->cursoModel    = $cursoModel ?? new CursoModel();
-        $this->cursoService  = $cursoService ?? \Config\Services::curso();
+        $this->seccionModel      = $seccionModel ?? new SeccionCursoModel();
+        $this->cursoModel        = $cursoModel ?? new CursoModel();
+        $this->cursoService      = $cursoService ?? \Config\Services::curso();
+        $this->resumenPdfService = $resumenPdfService ?? \Config\Services::resumenPdf();
     }
 
     /**
@@ -92,6 +98,10 @@ class SeccionCursoService
 
         $this->validarPdf($file);
 
+        // Extraer y resumir el texto antes de mover el archivo, para fallar rápido
+        // (PDF sin texto legible o error de la IA) sin dejar archivos huérfanos.
+        $resumen = $this->resumenPdfService->procesarPdf($file->getTempName());
+
         $rutaCarpeta = $this->rutaCarpetaCursoPorId($idCurso);
         $nombreArchivo = $this->nombreArchivoUnico($file);
         $rutaDestino = $rutaCarpeta . DIRECTORY_SEPARATOR . $nombreArchivo;
@@ -108,6 +118,7 @@ class SeccionCursoService
             'idCurso'           => $idCurso,
             'Nombre'            => $nombre,
             'RutaArchivo'       => $nombreArchivo,
+            'Resumen'           => $resumen,
             'Orden'             => $orden,
             'FechaCreacion'     => $now,
             'FechaModificacion' => $now,
@@ -174,6 +185,9 @@ class SeccionCursoService
 
             $this->validarPdf($file);
 
+            // Extraer y resumir antes de mover, igual que en la creación.
+            $resumen = $this->resumenPdfService->procesarPdf($file->getTempName());
+
             $rutaCarpeta = $this->rutaCarpetaCursoPorId($idCurso);
             $nombreArchivo = $this->nombreArchivoUnico($file);
             $rutaDestinoNuevo = $rutaCarpeta . DIRECTORY_SEPARATOR . $nombreArchivo;
@@ -184,6 +198,7 @@ class SeccionCursoService
 
             $nuevaRutaArchivo = $nombreArchivo;
             $payload['RutaArchivo'] = $nombreArchivo;
+            $payload['Resumen'] = $resumen;
 
             if (!empty($seccion['RutaArchivo'])) {
                 $rutaAnterior = $rutaCarpeta . DIRECTORY_SEPARATOR . $seccion['RutaArchivo'];
@@ -304,6 +319,11 @@ class SeccionCursoService
         $mime = $file->getMimeType();
         if ($mime !== 'application/pdf') {
             throw new RuntimeException('Solo se permiten archivos PDF.');
+        }
+
+        if ($file->getSize() > self::MAX_BYTES_PDF) {
+            $maxMb = self::MAX_BYTES_PDF / 1024 / 1024;
+            throw new RuntimeException("El PDF supera el tamaño máximo permitido ({$maxMb} MB).");
         }
     }
 }
