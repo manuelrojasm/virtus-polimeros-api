@@ -134,3 +134,6 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+# Salidas locales de pruebas manuales (Claude Code)
+/Claude outputs/
+
