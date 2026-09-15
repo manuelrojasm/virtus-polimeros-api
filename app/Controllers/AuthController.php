@@ -14,6 +14,21 @@ class AuthController extends ResourceController
 {
     private $key;
 
+    private const PASSWORD_MIN_LENGTH = 8;
+    private const PASSWORD_REQUIREMENTS_TEXT = 'Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial';
+
+    /**
+     * Verifica que la contraseña cumpla la misma política exigida en el frontend.
+     */
+    private function isPasswordStrong(string $password): bool
+    {
+        return strlen($password) >= self::PASSWORD_MIN_LENGTH
+            && preg_match('/[a-z]/', $password)
+            && preg_match('/[A-Z]/', $password)
+            && preg_match('/\d/', $password)
+            && preg_match('/[^A-Za-z0-9]/', $password);
+    }
+
     public function __construct()
     {
         $this->key = getenv('JWT_SECRET'); 
@@ -38,7 +53,7 @@ class AuthController extends ResourceController
             ],
             properties: [
                 new OA\Property(property: "Correo", type: "string", format: "email", example: "usuario@example.com"),
-                new OA\Property(property: "Contraseña", type: "string", minLength: 6, example: "secreta123"),
+                new OA\Property(property: "Contraseña", type: "string", minLength: 8, example: "Secreta123!"),
                 new OA\Property(property: "idRol", type: "integer", example: 1, description: "1 = estudiante, 2 = admin"),
                 new OA\Property(property: "PrimerNombre", type: "string", example: "Carlos"),
                 new OA\Property(property: "PrimerApellido", type: "string", example: "Gómez"),
@@ -119,9 +134,9 @@ class AuthController extends ResourceController
             return $this->respond(['success' => false, 'message' => 'El formato del Correo es inválido'], 200);
         }
     
-        // Validar que la contraseña tenga al menos 6 caracteres
-        if (strlen($json->Contraseña) < 6) {
-            return $this->respond(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres'], 200);
+        // Validar que la contraseña cumpla la política de seguridad
+        if (!$this->isPasswordStrong($json->Contraseña)) {
+            return $this->respond(['success' => false, 'message' => self::PASSWORD_REQUIREMENTS_TEXT], 200);
         }
     
         // Validar que el campo Documento no esté vacío
@@ -354,15 +369,30 @@ class AuthController extends ResourceController
         }
     }
 
-    private function generateRandomPassword($length = 8)
+    private function generateRandomPassword($length = 12)
     {
-        // Generar una contraseña aleatoria con letras y números
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $password = '';
-        for ($i = 0; $i < $length; $i++) {
-            $password .= $characters[rand(0, strlen($characters) - 1)];
+        // Generar una contraseña aleatoria que cumpla la política de seguridad
+        // (mayúscula, minúscula, número y carácter especial)
+        $lower = 'abcdefghijklmnopqrstuvwxyz';
+        $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $digits = '0123456789';
+        $special = '!@#$%^&*()-_=+';
+        $all = $lower . $upper . $digits . $special;
+
+        $password = [
+            $lower[random_int(0, strlen($lower) - 1)],
+            $upper[random_int(0, strlen($upper) - 1)],
+            $digits[random_int(0, strlen($digits) - 1)],
+            $special[random_int(0, strlen($special) - 1)],
+        ];
+
+        for ($i = count($password); $i < $length; $i++) {
+            $password[] = $all[random_int(0, strlen($all) - 1)];
         }
-        return $password;
+
+        shuffle($password);
+
+        return implode('', $password);
     }
 
     #[OA\Put(
@@ -683,6 +713,13 @@ class AuthController extends ResourceController
             return $this->respond([
                 'success' => false,
                 'message' => 'La contraseña actual es incorrecta'
+            ], 400);
+        }
+
+        if (!$this->isPasswordStrong($data['nueva_clave'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => self::PASSWORD_REQUIREMENTS_TEXT
             ], 400);
         }
 
